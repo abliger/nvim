@@ -16,5 +16,5 @@ opt_local.colorcolumn = "120"
 
 -- 折叠
 opt_local.foldmethod = "expr"
-opt_local.foldexpr = "nvim_treesitter#foldexpr()"
+opt_local.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 opt_local.foldenable = false

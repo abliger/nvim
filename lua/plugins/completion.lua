@@ -32,6 +32,15 @@ return {
       })
 
       cmp.setup({
+        preselect = cmp.PreselectMode.None,
+        completion = {
+          completeopt = "menu,menuone,noinsert,noselect",
+        },
+        performance = {
+          debounce = 60,
+          throttle = 30,
+        },
+
         snippet = {
           expand = function(args)
             luasnip.lsp_expand(args.body)
@@ -79,17 +88,29 @@ return {
         }),
 
         formatting = {
-          format = lspkind.cmp_format({
-            mode = "symbol_text",
-            maxwidth = 50,
-            ellipsis_char = "...",
-            menu = {
-              nvim_lsp = "[LSP]",
-              luasnip = "[Snippet]",
-              buffer = "[Buffer]",
-              path = "[Path]",
-            },
-          }),
+          fields = { "kind", "abbr", "menu" },
+          format = function(entry, vim_item)
+            local kind = lspkind.cmp_format({
+              mode = "symbol_text",
+              maxwidth = 50,
+              ellipsis_char = "...",
+            })(entry, vim_item)
+            -- 在 menu 里显示来源 + 函数签名详情
+            local menu_map = {
+              nvim_lsp = "LSP",
+              luasnip = "Snip",
+              buffer = "Buf",
+              path = "Path",
+            }
+            local detail = entry.completion_item.detail or entry.completion_item.labelDetails or {}
+            local detail_str = type(detail) == "table" and (detail.detail or detail.description) or ""
+            if detail_str ~= "" and #detail_str < 30 then
+              kind.menu = string.format("[%s] %s", menu_map[entry.source.name] or entry.source.name, detail_str)
+            else
+              kind.menu = string.format("[%s]", menu_map[entry.source.name] or entry.source.name)
+            end
+            return kind
+          end,
         },
 
         experimental = {

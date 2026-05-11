@@ -83,9 +83,12 @@ return {
               "dist",
             },
           },
-          follow_current_file = { enabled = true },
-          use_libuv_file_watcher = true,
+          -- 关闭自动跟随，避免打开文件时竞态跳转到空白缓冲区
+          follow_current_file = { enabled = false },
+          use_libuv_file_watcher = false,
         },
+        -- 打开文件时不要替换这些特殊类型的窗口
+        open_files_do_not_replace_types = { "terminal", "Trouble", "qf", "Outline" },
         window = {
           width = 35,
           mappings = {

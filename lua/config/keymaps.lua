@@ -22,7 +22,7 @@ map("n", "<C-Right>", ":vertical resize +2<CR>", opts)
 -- 缓冲区导航
 map("n", "<S-l>", ":bnext<CR>", opts)
 map("n", "<S-h>", ":bprevious<CR>", opts)
-map("n", "<leader>c", ":bdelete<CR>", { desc = "关闭缓冲区" })
+map("n", "<leader>bd", ":bdelete<CR>", { desc = "关闭缓冲区" })
 
 -- 取消搜索高亮
 map("n", "<Esc>", ":noh<CR>", opts)

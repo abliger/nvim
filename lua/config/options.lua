@@ -58,9 +58,9 @@ opt.completeopt = { "menu", "menuone", "noselect" }
 opt.updatetime = 300
 opt.timeoutlen = 500
 
--- 折叠
+-- 折叠 (treesitter v1.0+)
 opt.foldmethod = "expr"
-opt.foldexpr = "nvim_treesitter#foldexpr()"
+opt.foldexpr = "v:lua.vim.treesitter.foldexpr()"
 opt.foldenable = false
 
 -- 禁用内置 netrw（使用 neo-tree）

@@ -98,6 +98,28 @@ return {
           end, "格式化文档")
         end
 
+        -- Inlay Hints（参数名/类型内联提示）
+        if client:supports_method("textDocument/inlayHint") then
+          vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+        end
+
+        -- 自动签名帮助：输入 ( 或 , 时自动显示函数签名
+        if client:supports_method("textDocument/signatureHelp") then
+          local sig_group = vim.api.nvim_create_augroup("LspSignatureHelp" .. bufnr, { clear = true })
+          vim.api.nvim_create_autocmd("TextChangedI", {
+            group = sig_group,
+            buffer = bufnr,
+            callback = function()
+              local col = vim.api.nvim_win_get_cursor(0)[2]
+              local line = vim.api.nvim_get_current_line()
+              local char = line:sub(col, col)
+              if char == "(" or char == "," then
+                vim.lsp.buf.signature_help()
+              end
+            end,
+          })
+        end
+
         -- 文档高亮
         if client:supports_method("textDocument/documentHighlight") then
           local augroup = vim.api.nvim_create_augroup("LspDocumentHighlight" .. bufnr, {})
@@ -174,6 +196,22 @@ return {
           vue = {
             hybridMode = false,
           },
+          typescript = {
+            -- 让 Volar 使用工作区中的 TypeScript
+            tsdk = vim.fs.find("node_modules/typescript/lib", { upward = true, path = vim.fn.getcwd() })[1]
+              or vim.fn.expand("~/.local/share/nvim/mason/packages/typescript-language-server/node_modules/typescript/lib"),
+          },
+        },
+        settings = {
+          vue = {
+            -- 自动导入组件
+            complete = {
+              casing = {
+                tags = "kebab",
+                props = "camel",
+              },
+            },
+          },
         },
       })
       vim.lsp.enable("vue_ls")
@@ -196,6 +234,16 @@ return {
             },
           },
           typescript = {
+            inlayHints = {
+              parameterNames = { enabled = "all" },
+              parameterTypes = { enabled = true },
+              variableTypes = { enabled = true },
+              functionLikeReturnTypes = { enabled = true },
+              enumMemberValues = { enabled = true },
+              propertyDeclarationTypes = { enabled = true },
+            },
+          },
+          javascript = {
             inlayHints = {
               parameterNames = { enabled = "all" },
               parameterTypes = { enabled = true },

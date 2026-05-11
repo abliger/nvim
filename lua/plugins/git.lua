@@ -114,8 +114,56 @@ return {
       { "<leader>gp", ":Git push<CR>", desc = "Git 推送" },
       { "<leader>gl", ":Git pull<CR>", desc = "Git 拉取" },
       { "<leader>gb", ":Git blame<CR>", desc = "Git 追责" },
-      { "<leader>gd", ":Gdiffsplit<CR>", desc = "Git 差异分屏" },
       { "<leader>gL", ":Git log<CR>", desc = "Git 日志" },
+      {
+        "<leader>gd",
+        function()
+          local diff_group = vim.api.nvim_create_augroup("DiffFollow", { clear = true })
+
+          if vim.g.diff_follow then
+            -- 关闭跟随模式
+            vim.g.diff_follow = false
+            vim.api.nvim_clear_autocmds({ group = diff_group })
+            vim.cmd("diffoff!")
+            if vim.fn.winnr("$") > 1 then
+              vim.cmd("wincmd o")
+            end
+            vim.notify("Diff 跟随模式已关闭", vim.log.levels.INFO)
+            return
+          end
+
+          -- 启动跟随模式
+          vim.g.diff_follow = true
+          vim.cmd("Gvdiffsplit!")
+          vim.notify("Diff 跟随模式已开启，切换文件自动更新 diff（再按 <leader>gd 退出）", vim.log.levels.INFO)
+
+          vim.api.nvim_create_autocmd("BufEnter", {
+            group = diff_group,
+            pattern = "*",
+            callback = function()
+              if not vim.g.diff_follow then
+                return
+              end
+
+              local bufname = vim.fn.bufname("%")
+              -- 跳过 fugitive 内部缓冲区和特殊缓冲区
+              if bufname:match("^fugitive://") or vim.bo.buftype ~= "" then
+                return
+              end
+
+              -- 关闭当前 diff，只保留当前窗口
+              vim.cmd("diffoff!")
+              if vim.fn.winnr("$") > 1 then
+                vim.cmd("wincmd o")
+              end
+
+              -- 为新文件启动 diff（未跟踪文件会静默失败）
+              pcall(vim.cmd, "Gvdiffsplit!")
+            end,
+          })
+        end,
+        desc = "Git 差异跟随 (左右)",
+      },
     },
   },
 
