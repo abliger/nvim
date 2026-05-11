@@ -99,8 +99,20 @@ return {
         end
 
         -- Inlay Hints（参数名/类型内联提示）
+        -- vtsls/vue_ls 在 Vue 文件中返回的 hint 位置容易越界，触发 Neovim bug
+        -- 只在非 Vue 文件或已知稳定的 LSP 上自动启用
         if client:supports_method("textDocument/inlayHint") then
-          vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+          local ft = vim.bo[bufnr].filetype
+          local skip_auto = (ft == "vue" and (client.name == "vtsls" or client.name == "vue_ls"))
+          if not skip_auto then
+            pcall(vim.lsp.inlay_hint.enable, true, { bufnr = bufnr })
+          end
+
+          -- 手动开关当前 buffer 的 inlay hint
+          map("<leader>ih", function()
+            local enabled = vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr })
+            pcall(vim.lsp.inlay_hint.enable, not enabled, { bufnr = bufnr })
+          end, "切换 Inlay Hint")
         end
 
         -- 自动签名帮助：输入 ( 或 , 时自动显示函数签名
@@ -187,24 +199,21 @@ return {
       })
       vim.lsp.enable("lua_ls")
 
-      -- Vue (Volar)
+      -- Vue (Vue Language Server / Volar 2.0+)
+      -- 使用 Hybrid Mode：vue_ls 负责 Vue 模板/SFC，vtsls 负责 TS 类型
       vim.lsp.config("vue_ls", {
         capabilities = capabilities,
         on_attach = on_attach,
         filetypes = { "vue" },
         init_options = {
-          vue = {
-            hybridMode = false,
-          },
           typescript = {
-            -- 让 Volar 使用工作区中的 TypeScript
-            tsdk = vim.fs.find("node_modules/typescript/lib", { upward = true, path = vim.fn.getcwd() })[1]
-              or vim.fn.expand("~/.local/share/nvim/mason/packages/typescript-language-server/node_modules/typescript/lib"),
+            -- 优先使用项目本地的 TypeScript，否则用 vtsls 自带的
+            tsdk = vim.fs.find("node_modules/typescript/lib", { upward = true })[1]
+              or vim.fn.expand("~/.local/share/nvim/mason/packages/vtsls/node_modules/@vtsls/language-server/node_modules/typescript/lib"),
           },
         },
         settings = {
           vue = {
-            -- 自动导入组件
             complete = {
               casing = {
                 tags = "kebab",
@@ -217,6 +226,7 @@ return {
       vim.lsp.enable("vue_ls")
 
       -- TypeScript (vtsls)
+      -- 为 Vue 支持加载 @vue/typescript-plugin
       vim.lsp.config("vtsls", {
         capabilities = capabilities,
         on_attach = on_attach,
@@ -230,7 +240,15 @@ return {
         settings = {
           vtsls = {
             tsserver = {
-              globalPlugins = {},
+              globalPlugins = {
+                {
+                  name = "@vue/typescript-plugin",
+                  location = vim.fn.expand("~/.local/share/nvim/mason/packages/vue-language-server/node_modules/@vue/typescript-plugin"),
+                  languages = { "vue" },
+                  configNamespace = "typescript",
+                  enableForWorkspaceTypeScriptVersions = true,
+                },
+              },
             },
           },
           typescript = {

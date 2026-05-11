@@ -32,6 +32,22 @@ autocmd("BufEnter", {
   group = augroup("AutoRoot", {}),
   pattern = "*",
   callback = function()
+    -- 排除特殊文件类型，避免干扰 neo-tree 等插件的缓冲区操作
+    local exclude_fts = { "neo-tree", "NvimTree", "lazy", "mason", "TelescopePrompt", "nofile", "prompt" }
+    local current_ft = vim.bo.filetype
+    for _, ft in ipairs(exclude_fts) do
+      if current_ft == ft then
+        return
+      end
+    end
+
+    -- 排除无名称缓冲区和特殊缓冲区
+    local bufname = vim.api.nvim_buf_get_name(0)
+    local buftype = vim.bo.buftype
+    if buftype ~= "" or bufname == "" then
+      return
+    end
+
     local root = vim.fs.root(0, { ".git", "pom.xml", "package.json", "vite.config.ts", "vue.config.js", "init.lua" })
     if root then
       vim.cmd("silent! lcd " .. root)

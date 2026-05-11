@@ -120,22 +120,38 @@ return {
         function()
           local diff_group = vim.api.nvim_create_augroup("DiffFollow", { clear = true })
 
+          ---@param msg string
+          local function notify(msg)
+            vim.notify(msg, vim.log.levels.INFO)
+          end
+
+          ---关闭所有 fugitive 相关的 diff 窗口，保留普通文件窗口
+          local function close_fugitive_wins()
+            for _, win in ipairs(vim.api.nvim_list_wins()) do
+              local buf = vim.api.nvim_win_get_buf(win)
+              local name = vim.api.nvim_buf_get_name(buf)
+              if name:match("^fugitive://") then
+                vim.api.nvim_win_close(win, false)
+              end
+            end
+          end
+
           if vim.g.diff_follow then
             -- 关闭跟随模式
             vim.g.diff_follow = false
+            vim.g.last_diff_buf = nil
             vim.api.nvim_clear_autocmds({ group = diff_group })
+            close_fugitive_wins()
             vim.cmd("diffoff!")
-            if vim.fn.winnr("$") > 1 then
-              vim.cmd("wincmd o")
-            end
-            vim.notify("Diff 跟随模式已关闭", vim.log.levels.INFO)
+            notify("Diff 跟随模式已关闭")
             return
           end
 
           -- 启动跟随模式
           vim.g.diff_follow = true
+          vim.g.last_diff_buf = vim.fn.bufname("%")
           vim.cmd("Gvdiffsplit!")
-          vim.notify("Diff 跟随模式已开启，切换文件自动更新 diff（再按 <leader>gd 退出）", vim.log.levels.INFO)
+          notify("Diff 跟随模式已开启，切换文件自动更新 diff（再按 <leader>gd 退出）")
 
           vim.api.nvim_create_autocmd("BufEnter", {
             group = diff_group,
@@ -146,19 +162,29 @@ return {
               end
 
               local bufname = vim.fn.bufname("%")
-              -- 跳过 fugitive 内部缓冲区和特殊缓冲区
-              if bufname:match("^fugitive://") or vim.bo.buftype ~= "" then
+              -- 跳过空 buffer、fugitive 内部缓冲区和特殊缓冲区
+              if bufname == "" or bufname:match("^fugitive://") or vim.bo.buftype ~= "" then
                 return
               end
 
-              -- 关闭当前 diff，只保留当前窗口
-              vim.cmd("diffoff!")
-              if vim.fn.winnr("$") > 1 then
-                vim.cmd("wincmd o")
+              -- 避免在 diff 视图内切换窗口时重复刷新
+              if bufname == vim.g.last_diff_buf then
+                return
               end
+              vim.g.last_diff_buf = bufname
 
-              -- 为新文件启动 diff（未跟踪文件会静默失败）
-              pcall(vim.cmd, "Gvdiffsplit!")
+              -- 延迟到文件加载完成后再执行，避免干扰 neo-tree 等插件的打开流程
+              vim.schedule(function()
+                if not vim.g.diff_follow or vim.bo.buftype ~= "" then
+                  return
+                end
+
+                -- 精准关闭 fugitive diff 窗口，保留工作文件和其他辅助窗口
+                close_fugitive_wins()
+
+                -- 为新文件启动 diff（未跟踪文件会静默失败）
+                pcall(vim.cmd, "Gvdiffsplit!")
+              end)
             end,
           })
         end,
