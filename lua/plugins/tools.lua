@@ -1,0 +1,357 @@
+-- ==========================================
+-- 实用工具插件
+-- ==========================================
+
+return {
+  -- 终端集成
+  {
+    "akinsho/toggleterm.nvim",
+    version = "*",
+    keys = {
+      { "<leader>t", ":ToggleTerm<CR>", desc = "切换终端" },
+      { "<leader>tg", ":lua _lazygit_toggle()<CR>", desc = "切换 lazygit" },
+    },
+    config = function()
+      require("toggleterm").setup({
+        size = 20,
+        open_mapping = [[<c-\>]],
+        hide_numbers = true,
+        shade_filetypes = {},
+        shade_terminals = true,
+        shading_factor = 2,
+        start_in_insert = true,
+        insert_mappings = true,
+        persist_size = true,
+        direction = "float",
+        close_on_exit = true,
+        shell = vim.o.shell,
+        float_opts = {
+          border = "curved",
+          winblend = 0,
+          highlights = {
+            border = "Normal",
+            background = "Normal",
+          },
+        },
+      })
+
+      -- Lazygit 终端
+      local Terminal = require("toggleterm.terminal").Terminal
+      local lazygit = Terminal:new({
+        cmd = "lazygit",
+        dir = "git_dir",
+        direction = "float",
+        float_opts = {
+          border = "double",
+        },
+        on_open = function(term)
+          vim.cmd("startinsert!")
+          vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
+        end,
+        on_close = function()
+          vim.cmd("startinsert!")
+        end,
+      })
+
+      function _lazygit_toggle()
+        lazygit:toggle()
+      end
+    end,
+  },
+
+  -- 快速注释
+  {
+    "numToStr/Comment.nvim",
+    event = { "BufReadPre", "BufNewFile" },
+    dependencies = {
+      "JoosepAlviste/nvim-ts-context-commentstring",
+    },
+    config = function()
+      require("Comment").setup({
+        pre_hook = require("ts_context_commentstring.integrations.comment_nvim").create_pre_hook(),
+      })
+    end,
+  },
+
+  -- 成对符号操作
+  {
+    "kylechui/nvim-surround",
+    version = "*",
+    event = "VeryLazy",
+    config = function()
+      require("nvim-surround").setup({})
+    end,
+  },
+
+  -- 高亮当前单词
+  {
+    "RRethy/vim-illuminate",
+    event = { "BufReadPost", "BufNewFile" },
+    config = function()
+      require("illuminate").configure({
+        providers = {
+          "lsp",
+          "treesitter",
+          "regex",
+        },
+        delay = 100,
+        filetype_overrides = {},
+        filetypes_denylist = {
+          "dirvish",
+          "fugitive",
+          "neo-tree",
+          "alpha",
+          "NvimTree",
+          "lazy",
+          "neogitstatus",
+          "Trouble",
+          "lir",
+          "Outline",
+          "spectre_panel",
+          "toggleterm",
+          "DressingSelect",
+          "TelescopePrompt",
+        },
+        filetypes_allowlist = {},
+        modes_denylist = {},
+        modes_allowlist = {},
+        providers_regex_syntax_denylist = {},
+        providers_regex_syntax_allowlist = {},
+        under_cursor = true,
+      })
+    end,
+  },
+
+  -- 自动括号配对
+  {
+    "windwp/nvim-autopairs",
+    event = "InsertEnter",
+    config = function()
+      require("nvim-autopairs").setup({
+        check_ts = true,
+        ts_config = {
+          lua = { "string", "source" },
+          javascript = { "string", "template_string" },
+          java = false,
+        },
+        disable_filetype = { "TelescopePrompt", "spectre_panel" },
+        fast_wrap = {
+          map = "<M-e>",
+          chars = { "{", "[", "(", '"', "'" },
+          pattern = string.gsub([[ [%'%)%>%]%)%}%,] ]], "%s+", ""),
+          offset = 0,
+          end_key = "$",
+          keys = "qwertyuiopzxcvbnmasdfghjkl",
+          check_comma = true,
+          highlight = "PmenuSel",
+          highlight_grey = "LineNr",
+        },
+      })
+
+      -- 与 nvim-cmp 集成
+      local cmp_autopairs = require("nvim-autopairs.completion.cmp")
+      local cmp = require("cmp")
+      cmp.event:on("confirm_done", cmp_autopairs.on_confirm_done({ map_char = { tex = "" } }))
+    end,
+  },
+
+  -- 大纲/符号列表
+  {
+    "simrat39/symbols-outline.nvim",
+    cmd = "SymbolsOutline",
+    keys = {
+      { "<leader>so", ":SymbolsOutline<CR>", desc = "切换符号大纲" },
+    },
+    config = function()
+      require("symbols-outline").setup({
+        highlight_hovered_item = true,
+        show_guides = true,
+        auto_preview = false,
+        position = "right",
+        relative_width = true,
+        width = 25,
+        auto_close = false,
+        show_numbers = false,
+        show_relative_numbers = false,
+        show_symbol_details = true,
+        preview_bg_highlight = "Pmenu",
+        autofold_depth = nil,
+        auto_unfold_hover = true,
+        fold_markers = { "", "" },
+        wrap = false,
+        keymaps = {
+          close = { "<Esc>", "q" },
+          goto_location = "<Cr>",
+          focus_location = "o",
+          hover_symbol = "<C-space>",
+          toggle_preview = "K",
+          rename_symbol = "r",
+          code_actions = "a",
+          fold = "h",
+          unfold = "l",
+          fold_all = "W",
+          unfold_all = "E",
+          fold_reset = "R",
+        },
+        lsp_blacklist = {},
+        symbol_blacklist = {},
+        symbols = {
+          Package = { icon = "󰏗", hl = "@namespace" },
+          Class = { icon = "󰌗", hl = "@type" },
+          Method = { icon = "ƒ", hl = "@method" },
+          Property = { icon = "", hl = "@method" },
+          Field = { icon = "󰆨", hl = "@field" },
+          Constructor = { icon = "", hl = "@constructor" },
+          Enum = { icon = "了", hl = "@type" },
+          Interface = { icon = "󰜰", hl = "@type" },
+          Function = { icon = "󰊕", hl = "@function" },
+          Variable = { icon = "󰀫", hl = "@constant" },
+          Constant = { icon = "", hl = "@constant" },
+          String = { icon = "󰀬", hl = "@string" },
+          Number = { icon = "#", hl = "@number" },
+          Boolean = { icon = "", hl = "@boolean" },
+          Array = { icon = "󰅪", hl = "@constant" },
+          Object = { icon = "󰅩", hl = "@type" },
+          Key = { icon = "󰌋", hl = "@type" },
+          Null = { icon = "NULL", hl = "@type" },
+          EnumMember = { icon = "", hl = "@field" },
+          Struct = { icon = "󰙅", hl = "@type" },
+          Event = { icon = "", hl = "@type" },
+          Operator = { icon = "󰆕", hl = "@operator" },
+          TypeParameter = { icon = "𝙏", hl = "@parameter" },
+          Component = { icon = "󰅴", hl = "@function" },
+          Fragment = { icon = "󰅴", hl = "@constant" },
+        },
+      })
+    end,
+  },
+
+  -- 问题列表
+  {
+    "folke/trouble.nvim",
+    cmd = { "Trouble", "TroubleToggle", "TroubleRefresh" },
+    keys = {
+      { "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", desc = "诊断列表 (Trouble)" },
+      { "<leader>xX", "<cmd>Trouble diagnostics toggle filter.buf=0<cr>", desc = "缓冲区诊断 (Trouble)" },
+      { "<leader>cs", "<cmd>Trouble symbols toggle focus=false<cr>", desc = "符号列表 (Trouble)" },
+      { "<leader>cl", "<cmd>Trouble lsp toggle focus=false win.position=right<cr>", desc = "LSP 定义/引用 (Trouble)" },
+      { "<leader>xL", "<cmd>Trouble loclist toggle<cr>", desc = "位置列表 (Trouble)" },
+      { "<leader>xQ", "<cmd>Trouble qflist toggle<cr>", desc = "快速修复列表 (Trouble)" },
+    },
+    config = function()
+      require("trouble").setup({
+        auto_open = false,
+        auto_close = false,
+        auto_preview = true,
+        auto_fold = false,
+        use_diagnostic_signs = true,
+      })
+    end,
+  },
+
+  -- 项目管理
+  {
+    "ahmedkhalf/project.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("project_nvim").setup({
+        detection_methods = { "pattern", "lsp" },
+        patterns = { ".git", "pom.xml", "package.json", "=src" },
+        silent_chdir = true,
+        scope_chdir = "global",
+      })
+      require("telescope").load_extension("projects")
+    end,
+  },
+
+  -- 快速跳转
+  {
+    url = "https://codeberg.org/andyg/leap.nvim",
+    event = "VeryLazy",
+    config = function()
+      local leap = require("leap")
+      -- 创建重复跳转的快捷键 (Sneak-style 映射)
+      vim.keymap.set({ "n", "x", "o" }, "s", "<Plug>(leap-forward)")
+      vim.keymap.set({ "n", "x", "o" }, "S", "<Plug>(leap-backward)")
+      vim.keymap.set({ "n", "x", "o" }, "gs", "<Plug>(leap-from-window)")
+    end,
+  },
+
+  -- 代码检查 (Linter) -> 使用 oxlint 替代 eslint
+  {
+    "mfussenegger/nvim-lint",
+    event = { "BufReadPre", "BufNewFile" },
+    config = function()
+      local lint = require("lint")
+
+      lint.linters_by_ft = {
+        javascript = { "oxlint" },
+        javascriptreact = { "oxlint" },
+        typescript = { "oxlint" },
+        typescriptreact = { "oxlint" },
+        vue = { "oxlint" },
+      }
+
+      -- oxlint 使用项目中的 .oxlintrc.json 配置
+      lint.linters.oxlint = {
+        cmd = "oxlint",
+        stdin = false,
+        args = {
+          "--format", "json",
+          "$FILENAME",
+        },
+        stream = "stdout",
+        ignore_exitcode = true,
+        parser = function(output, bufnr, linter_cwd)
+          if output == "" then
+            return {}
+          end
+
+          local ok, decoded = pcall(vim.json.decode, output)
+          if not ok or not decoded or not decoded.messages then
+            return {}
+          end
+
+          local diagnostics = {}
+          for _, msg in ipairs(decoded.messages) do
+            table.insert(diagnostics, {
+              bufnr = bufnr,
+              lnum = (msg.line or 1) - 1,
+              col = (msg.column or 1) - 1,
+              end_lnum = (msg.endLine or msg.line or 1) - 1,
+              end_col = (msg.endColumn or msg.column or 1) - 1,
+              severity = msg.severity == 2 and vim.diagnostic.severity.ERROR
+                         or msg.severity == 1 and vim.diagnostic.severity.WARNING
+                         or vim.diagnostic.severity.INFO,
+              message = msg.message,
+              source = "oxlint",
+              code = msg.ruleId,
+            })
+          end
+          return diagnostics
+        end,
+      }
+
+      -- 保存时自动运行 lint
+      vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+        group = vim.api.nvim_create_augroup("NvimLint", { clear = true }),
+        callback = function()
+          lint.try_lint()
+        end,
+      })
+    end,
+  },
+
+  -- 会话管理
+  {
+    "rmagatti/auto-session",
+    event = "VimEnter",
+    config = function()
+      require("auto-session").setup({
+        log_level = "error",
+        auto_session_suppress_dirs = { "~/", "~/Downloads", "/" },
+        auto_session_use_git_branch = true,
+      })
+    end,
+  },
+}
