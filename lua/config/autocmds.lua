@@ -32,7 +32,7 @@ autocmd("BufEnter", {
   group = augroup("AutoRoot", {}),
   pattern = "*",
   callback = function()
-    local root = vim.fs.root(0, { ".git", "pom.xml", "package.json", "vite.config.ts", "vue.config.js" })
+    local root = vim.fs.root(0, { ".git", "pom.xml", "package.json", "vite.config.ts", "vue.config.js", "init.lua" })
     if root then
       vim.cmd("silent! lcd " .. root)
     end
