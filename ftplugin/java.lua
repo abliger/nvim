@@ -14,7 +14,4 @@ opt_local.expandtab = true
 opt_local.textwidth = 120
 opt_local.colorcolumn = "120"
 
--- 折叠
-opt_local.foldmethod = "expr"
-opt_local.foldexpr = "v:lua.vim.treesitter.foldexpr()"
-opt_local.foldenable = false
+-- 折叠由全局 options.lua 统一设置，此处不需要重复配置

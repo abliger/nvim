@@ -280,7 +280,6 @@ return {
         silent_chdir = true,
         scope_chdir = "global",
       })
-      require("telescope").load_extension("projects")
     end,
   },
 
@@ -353,7 +352,7 @@ return {
       }
 
       -- 保存时自动运行 lint
-      vim.api.nvim_create_autocmd({ "BufWritePost", "BufReadPost", "InsertLeave" }, {
+      vim.api.nvim_create_autocmd({ "BufWritePost" }, {
         group = vim.api.nvim_create_augroup("NvimLint", { clear = true }),
         callback = function()
           lint.try_lint()

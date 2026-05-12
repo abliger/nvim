@@ -100,9 +100,6 @@ return {
       dap.listeners.before.event_terminated["dapui_config"] = function()
         dapui.close()
       end
-      dap.listeners.before.event_exited["dapui_config"] = function()
-        dapui.close()
-      end
 
       -- Java 调试适配器 (由 nvim-jdtls 自动配置)
       -- 这里可以添加其他语言的适配器配置

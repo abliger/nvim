@@ -10,6 +10,7 @@ return {
       "nvim-lua/plenary.nvim",
       { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
       "nvim-telescope/telescope-ui-select.nvim",
+      "ahmedkhalf/project.nvim",
     },
     keys = {
       { "<leader>ff", "<cmd>Telescope find_files<CR>", desc = "查找文件" },
@@ -88,6 +89,7 @@ return {
 
       telescope.load_extension("fzf")
       telescope.load_extension("ui-select")
+      telescope.load_extension("projects")
     end,
   },
 }

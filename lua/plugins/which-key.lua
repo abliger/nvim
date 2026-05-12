@@ -69,9 +69,7 @@ return {
         { "<leader>bd", desc = "关闭缓冲区", order = 10 },
         { "<leader>s", group = "符号/大纲", icon = { icon = "", color = "purple" }, order = 10 },
         -- 隐藏基础操作键，避免干扰分组显示
-        { "<leader>q", hidden = true },
-        { "<leader>Q", hidden = true },
-        { "<leader>w", hidden = true },
+        { "<leader>qq", desc = "退出", order = 10 },
         { "<leader>t", group = "终端", icon = { icon = "", color = "green" }, order = 10 },
         { "<leader>x", group = "问题列表", icon = { icon = "", color = "red" }, order = 10 },
       },

@@ -3,14 +3,32 @@
 -- ==========================================
 
 return {
+  -- 自动安装 Mason 工具（formatter / linter / DAP）
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    dependencies = { "williamboman/mason.nvim" },
+    config = function()
+      require("mason-tool-installer").setup({
+        ensure_installed = {
+          -- Formatter
+          "stylua",
+          "shfmt",
+          -- Linter
+          "oxlint",
+        },
+        auto_update = false,
+        run_on_start = true,
+      })
+    end,
+  },
+
   {
     "stevearc/conform.nvim",
     event = { "BufReadPre", "BufNewFile" },
     config = function()
       require("conform").setup({
         formatters_by_ft = {
-          -- Java (由 jdtls 处理，但也可以配置备用)
-          java = { "google-java-format" },
+          -- Java 由 jdtls 处理，不额外配置 formatter
           -- Vue / 前端 -> 使用 oxfmt
           vue = { "oxfmt" },
           javascript = { "oxfmt" },
@@ -34,7 +52,7 @@ return {
         formatters = {
           oxfmt = {
             command = "oxfmt",
-            args = { "--stdin" },
+            args = { "--stdin-filepath", "$FILENAME" },
             stdin = true,
           },
           stylua = {

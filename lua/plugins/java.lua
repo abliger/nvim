@@ -63,10 +63,6 @@ return {
                 },
                 format = {
                   enabled = true,
-                  settings = {
-                    url = home .. "/.config/nvim/java-formatter.xml",
-                    profile = "GoogleStyle",
-                  },
                 },
                 completion = {
                   favoriteStaticMembers = {

@@ -52,7 +52,7 @@ map("i", "kj", "<Esc>", opts)
 
 -- 快速保存和退出
 map("n", "<leader>w", ":w<CR>", { desc = "保存文件" })
-map("n", "<leader>q", ":q<CR>", { desc = "退出" })
+map("n", "<leader>qq", ":q<CR>", { desc = "退出" })
 map("n", "<leader>Q", ":qa!<CR>", { desc = "强制退出全部" })
 
 -- 快速编辑配置文件
