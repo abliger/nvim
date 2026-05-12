@@ -66,8 +66,6 @@ return {
 
       -- 通用的 LSP 客户端能力
       local capabilities = cmp_nvim_lsp.default_capabilities()
-      capabilities.textDocument.completion.completionItem.snippetSupport = true
-
       -- LSP 附加函数
       local on_attach = function(client, bufnr)
         local map = function(keys, func, desc)
@@ -87,8 +85,8 @@ return {
         map("<leader>ds", require("telescope.builtin").lsp_document_symbols, "文档符号")
         map("<leader>ws", require("telescope.builtin").lsp_workspace_symbols, "工作区符号")
         map("<leader>dl", vim.diagnostic.open_float, "行诊断")
-        map("[d", vim.diagnostic.goto_prev, "上一个诊断")
-        map("]d", vim.diagnostic.goto_next, "下一个诊断")
+        map("[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, "上一个诊断")
+        map("]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, "下一个诊断")
         map("<leader>q", vim.diagnostic.setloclist, "定位列表")
 
         -- 格式化快捷键
@@ -164,16 +162,17 @@ return {
         severity_sort = true,
       })
 
-      -- 诊断图标
-      local signs = {
-        { name = "DiagnosticSignError", text = "" },
-        { name = "DiagnosticSignWarn", text = "" },
-        { name = "DiagnosticSignHint", text = "󰌵" },
-        { name = "DiagnosticSignInfo", text = "" },
-      }
-      for _, sign in ipairs(signs) do
-        vim.fn.sign_define(sign.name, { texthl = sign.name, text = sign.text, numhl = "" })
-      end
+      -- 诊断图标 (Neovim 0.10+ 推荐方式)
+      vim.diagnostic.config({
+        signs = {
+          text = {
+            [vim.diagnostic.severity.ERROR] = "",
+            [vim.diagnostic.severity.WARN] = "",
+            [vim.diagnostic.severity.HINT] = "󰌵",
+            [vim.diagnostic.severity.INFO] = "",
+          },
+        },
+      })
 
       -- ==========================================
       -- Neovim 0.11+ 原生 LSP 配置方式

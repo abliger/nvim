@@ -6,8 +6,10 @@ local opt = vim.opt
 local g = vim.g
 
 -- 编码
-opt.encoding = "utf-8"
 opt.fileencoding = "utf-8"
+
+-- 将 Mason 的 bin 目录加入 PATH，让外部插件能找到 oxfmt/oxlint/prettier 等
+vim.env.PATH = vim.env.PATH .. ":" .. vim.fn.stdpath("data") .. "/mason/bin"
 
 -- 行号
 opt.number = true

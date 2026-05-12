@@ -14,3 +14,18 @@ require("config.autocmds")
 
 -- 加载 lazy.nvim 插件管理器
 require("config.lazy")
+
+-- nvim 不带参数启动时，自动弹出 session 选择器
+vim.api.nvim_create_autocmd("VimEnter", {
+  once = true,
+  callback = function()
+    if vim.fn.argc() == 0 then
+      vim.defer_fn(function()
+        local ok, auto_session = pcall(require, "auto-session")
+        if ok then
+          auto_session.search()
+        end
+      end, 150)
+    end
+  end,
+})

@@ -7,10 +7,6 @@ return {
   {
     "akinsho/toggleterm.nvim",
     version = "*",
-    keys = {
-      { "<leader>t", ":ToggleTerm<CR>", desc = "切换终端" },
-      { "<leader>tg", ":lua _lazygit_toggle()<CR>", desc = "切换 lazygit" },
-    },
     config = function()
       require("toggleterm").setup({
         size = 20,
@@ -56,7 +52,71 @@ return {
       function _lazygit_toggle()
         lazygit:toggle()
       end
+
+      -- 运行当前文件的终端（按文件类型自动选择命令）
+      local run_term = Terminal:new({
+        direction = "float",
+        close_on_exit = false,
+        float_opts = { border = "curved" },
+        on_open = function(term)
+          vim.cmd("startinsert!")
+          vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
+        end,
+      })
+
+      function _run_current_file()
+        local ft = vim.bo.filetype
+        local filepath = vim.fn.expand("%:p")
+        local cmd = nil
+
+        local runners = {
+          python = "python3",
+          javascript = "node",
+          typescript = "npx ts-node",
+          sh = "bash",
+          lua = "lua",
+          go = "go run",
+          rust = "cargo run",
+          java = "java",
+        }
+
+        if runners[ft] then
+          cmd = runners[ft] .. " " .. vim.fn.shellescape(filepath)
+        end
+
+        if cmd then
+          run_term.cmd = cmd
+          run_term:open()
+        else
+          vim.notify("没有为文件类型 '" .. ft .. "' 配置运行命令", vim.log.levels.WARN)
+        end
+      end
+
+      -- 运行自定义命令（会弹出输入框）
+      function _run_custom_command()
+        vim.ui.input({ prompt = "Run: " }, function(input)
+          if input and input ~= "" then
+            local custom = Terminal:new({
+              cmd = input,
+              direction = "float",
+              close_on_exit = false,
+              float_opts = { border = "curved" },
+              on_open = function(term)
+                vim.cmd("startinsert!")
+                vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
+              end,
+            })
+            custom:open()
+          end
+        end)
+      end
     end,
+    keys = {
+      { "<leader>t", ":ToggleTerm<CR>", desc = "切换终端" },
+      { "<leader>tg", ":lua _lazygit_toggle()<CR>", desc = "切换 lazygit" },
+      { "<leader>tr", ":lua _run_current_file()<CR>", desc = "运行当前文件" },
+      { "<leader>tc", ":lua _run_custom_command()<CR>", desc = "运行自定义命令" },
+    },
   },
 
   -- 快速注释
@@ -157,34 +217,23 @@ return {
 
   -- 大纲/符号列表
   {
-    "simrat39/symbols-outline.nvim",
-    cmd = "SymbolsOutline",
+    "hedyhli/outline.nvim",
+    cmd = { "Outline", "OutlineOpen" },
     keys = {
-      { "<leader>so", ":SymbolsOutline<CR>", desc = "切换符号大纲" },
+      { "<leader>so", "<cmd>Outline<CR>", desc = "切换符号大纲" },
     },
     config = function()
-      require("symbols-outline").setup({
-        highlight_hovered_item = true,
-        show_guides = true,
-        auto_preview = false,
-        position = "right",
-        relative_width = true,
-        width = 25,
-        auto_close = false,
-        show_numbers = false,
-        show_relative_numbers = false,
-        show_symbol_details = true,
-        preview_bg_highlight = "Pmenu",
-        autofold_depth = nil,
-        auto_unfold_hover = true,
-        fold_markers = { "", "" },
-        wrap = false,
+      require("outline").setup({
+        outline_window = {
+          position = "right",
+          width = 25,
+          relative_width = true,
+        },
         keymaps = {
           close = { "<Esc>", "q" },
           goto_location = "<Cr>",
-          focus_location = "o",
-          hover_symbol = "<C-space>",
-          toggle_preview = "K",
+          goto_and_close = "o",
+          hover_symbol = "K",
           rename_symbol = "r",
           code_actions = "a",
           fold = "h",
@@ -192,35 +241,6 @@ return {
           fold_all = "W",
           unfold_all = "E",
           fold_reset = "R",
-        },
-        lsp_blacklist = {},
-        symbol_blacklist = {},
-        symbols = {
-          Package = { icon = "󰏗", hl = "@namespace" },
-          Class = { icon = "󰌗", hl = "@type" },
-          Method = { icon = "ƒ", hl = "@method" },
-          Property = { icon = "", hl = "@method" },
-          Field = { icon = "󰆨", hl = "@field" },
-          Constructor = { icon = "", hl = "@constructor" },
-          Enum = { icon = "了", hl = "@type" },
-          Interface = { icon = "󰜰", hl = "@type" },
-          Function = { icon = "󰊕", hl = "@function" },
-          Variable = { icon = "󰀫", hl = "@constant" },
-          Constant = { icon = "", hl = "@constant" },
-          String = { icon = "󰀬", hl = "@string" },
-          Number = { icon = "#", hl = "@number" },
-          Boolean = { icon = "", hl = "@boolean" },
-          Array = { icon = "󰅪", hl = "@constant" },
-          Object = { icon = "󰅩", hl = "@type" },
-          Key = { icon = "󰌋", hl = "@type" },
-          Null = { icon = "NULL", hl = "@type" },
-          EnumMember = { icon = "", hl = "@field" },
-          Struct = { icon = "󰙅", hl = "@type" },
-          Event = { icon = "", hl = "@type" },
-          Operator = { icon = "󰆕", hl = "@operator" },
-          TypeParameter = { icon = "𝙏", hl = "@parameter" },
-          Component = { icon = "󰅴", hl = "@function" },
-          Fragment = { icon = "󰅴", hl = "@constant" },
         },
       })
     end,
@@ -349,9 +369,22 @@ return {
     config = function()
       require("auto-session").setup({
         log_level = "error",
-        auto_session_suppress_dirs = { "~/", "~/Downloads", "/" },
-        auto_session_use_git_branch = true,
+        suppressed_dirs = { "~/", "~/Downloads", "/" },
+        git_use_branch_name = true,
+        -- 不自动恢复上次会话，改为启动时手动选择
+        auto_restore = false,
+        -- 退出时仍然自动保存会话
+        auto_save = true,
+        -- session 选择器配置
+        session_lens = {
+          load_on_setup = true,
+          picker_opts = { border = true },
+          previewer = false,
+        },
       })
     end,
+    keys = {
+      { "<leader>S", "<cmd>AutoSession search<CR>", desc = "搜索 Session" },
+    },
   },
 }
