@@ -53,6 +53,12 @@ opt.clipboard = "unnamedplus"
 opt.splitright = true
 opt.splitbelow = true
 
+-- Session 保存内容：包含分屏布局、窗口大小、空窗口、buffer 列表、terminal 等
+opt.sessionoptions = { "blank", "buffers", "curdir", "folds", "help", "tabpages", "winsize", "winpos", "terminal" }
+
+-- 鼠标
+opt.mouse = "a"
+
 -- 补全
 opt.completeopt = { "menu", "menuone", "noselect" }
 

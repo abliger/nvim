@@ -52,6 +52,19 @@ if im_select_available() then
       end
     end,
   })
+
+  -- 离开终端模式时切换到英文输入法
+  autocmd("TermLeave", {
+    group = augroup("ImSelectTermLeave", {}),
+    pattern = "*",
+    callback = function()
+      local current = get_current_im()
+      if current and current ~= "" then
+        last_im = current
+      end
+      set_im(default_im)
+    end,
+  })
 end
 
 -- 高亮复制的内容

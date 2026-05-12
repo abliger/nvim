@@ -57,3 +57,14 @@ map("n", "<leader>Q", ":qa!<CR>", { desc = "强制退出全部" })
 
 -- 快速编辑配置文件
 map("n", "<leader>ev", ":e ~/.config/nvim/init.lua<CR>", { desc = "编辑配置" })
+
+-- 终端模式 --
+
+-- 按 Esc 退出终端插入模式，回到普通模式
+map("t", "<Esc>", [[<C-\><C-n>]], { noremap = true })
+
+-- 终端模式下直接切换窗口（先退出终端模式再切窗口）
+map("t", "<C-h>", [[<C-\><C-n><C-w>h]], { noremap = true })
+map("t", "<C-j>", [[<C-\><C-n><C-w>j]], { noremap = true })
+map("t", "<C-k>", [[<C-\><C-n><C-w>k]], { noremap = true })
+map("t", "<C-l>", [[<C-\><C-n><C-w>l]], { noremap = true })
