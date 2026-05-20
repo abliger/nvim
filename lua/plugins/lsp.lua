@@ -42,6 +42,8 @@ return {
           "cssls",
           "html",
           "jsonls",
+          -- Rust
+          "rust_analyzer",
           -- 其他
           "lua_ls",
           "yamlls",
@@ -156,14 +158,6 @@ return {
           border = "rounded",
           source = "always",
         },
-        signs = true,
-        underline = true,
-        update_in_insert = false,
-        severity_sort = true,
-      })
-
-      -- 诊断图标 (Neovim 0.10+ 推荐方式)
-      vim.diagnostic.config({
         signs = {
           text = {
             [vim.diagnostic.severity.ERROR] = "",
@@ -172,6 +166,9 @@ return {
             [vim.diagnostic.severity.INFO] = "",
           },
         },
+        underline = true,
+        update_in_insert = false,
+        severity_sort = true,
       })
 
       -- ==========================================
@@ -242,7 +239,7 @@ return {
               globalPlugins = {
                 {
                   name = "@vue/typescript-plugin",
-                  location = vim.fn.expand("~/.local/share/nvim/mason/packages/vue-language-server/node_modules/@vue/typescript-plugin"),
+                  location = vim.fn.stdpath("data") .. "/mason/packages/vue-language-server/node_modules/@vue/typescript-plugin",
                   languages = { "vue" },
                   configNamespace = "typescript",
                   enableForWorkspaceTypeScriptVersions = true,
@@ -337,6 +334,29 @@ return {
         on_attach = on_attach,
       })
       vim.lsp.enable("dockerls")
+
+      -- Rust
+      vim.lsp.config("rust_analyzer", {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        settings = {
+          ["rust-analyzer"] = {
+            cargo = { allFeatures = true },
+            checkOnSave = { command = "clippy" },
+            procMacro = { enable = true },
+            inlayHints = {
+              bindingModeHints = { enable = false },
+              chainingHints = { enable = true },
+              closingBraceHints = { enable = true, minLines = 25 },
+              closureReturnTypeHints = { enable = "with_block" },
+              lifetimeElisionHints = { enable = "skip_trivial" },
+              paramNames = { enable = true },
+              typeHints = { enable = true },
+            },
+          },
+        },
+      })
+      vim.lsp.enable("rust_analyzer")
 
       -- Java (jdtls) 由 nvim-jdtls 插件处理，这里不配置
     end,

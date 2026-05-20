@@ -67,6 +67,11 @@ return {
             ".git",
             "%.class",
             "%.jar",
+            "package%-lock%.json",
+            "yarn%.lock",
+            "pnpm%-lock%.yaml",
+            "Cargo%.lock",
+            "go%.sum",
           },
         },
         pickers = {

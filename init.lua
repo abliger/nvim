@@ -16,7 +16,9 @@ require("config.autocmds")
 require("config.lazy")
 
 -- nvim 不带参数启动时，自动弹出 session 选择器
+local session_augroup = vim.api.nvim_create_augroup("AutoSessionPicker", {})
 vim.api.nvim_create_autocmd("VimEnter", {
+  group = session_augroup,
   once = true,
   callback = function()
     if vim.fn.argc() == 0 then

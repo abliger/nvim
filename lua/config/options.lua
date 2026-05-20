@@ -8,8 +8,11 @@ local g = vim.g
 -- 编码
 opt.fileencoding = "utf-8"
 
--- 将 Mason 的 bin 目录加入 PATH，让外部插件能找到 oxfmt/oxlint/prettier 等
-vim.env.PATH = vim.env.PATH .. ":" .. vim.fn.stdpath("data") .. "/mason/bin"
+-- 将 Mason 的 bin 目录加入 PATH，让外部插件能找到 oxfmt/oxlint 等
+local mason_bin = vim.fn.stdpath("data") .. "/mason/bin"
+if not vim.env.PATH:find(mason_bin, 1, true) then
+  vim.env.PATH = vim.env.PATH .. ":" .. mason_bin
+end
 
 -- 行号
 opt.number = true
@@ -23,7 +26,10 @@ opt.expandtab = true
 opt.smartindent = true
 
 -- 换行
-opt.wrap = false
+opt.wrap = true
+opt.linebreak = true
+opt.breakindent = true
+opt.textwidth = 120
 
 -- 搜索
 opt.ignorecase = true

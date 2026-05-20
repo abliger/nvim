@@ -65,6 +65,15 @@ return {
       "nvim-tree/nvim-web-devicons",
       "MunifTanjim/nui.nvim",
     },
+    init = function()
+      -- 启动时若首参为目录，提前加载 neo-tree 以便其接管目录缓冲区
+      if vim.fn.argc(-1) == 1 then
+        local stat = vim.uv.fs_stat(tostring(vim.fn.argv(0)))
+        if stat and stat.type == "directory" then
+          require("neo-tree")
+        end
+      end
+    end,
     config = function()
       require("neo-tree").setup({
         close_if_last_window = true,
@@ -72,6 +81,8 @@ return {
         enable_git_status = true,
         enable_diagnostics = true,
         filesystem = {
+          -- 接管目录缓冲区，使 `nvim .` 直接显示文件树
+          hijack_netrw_behavior = "open_default",
           filtered_items = {
             visible = false,
             hide_dotfiles = false,
@@ -83,9 +94,13 @@ return {
               "dist",
             },
           },
-          -- 关闭自动跟随，避免打开文件时竞态跳转到空白缓冲区
-          follow_current_file = { enabled = false },
+          -- 打开文件时自动展开目录树并定位到当前文件
+          follow_current_file = { enabled = true },
           use_libuv_file_watcher = false,
+          -- 将只有一个子目录的空文件夹合并显示（Java 包结构 com/xx/xxx）
+          group_empty_dirs = true,
+          -- 深度扫描，一开始就递归加载所有目录，配合 group_empty_dirs 显示完整折叠效果
+          scan_mode = "deep",
         },
         -- 打开文件时不要替换这些特殊类型的窗口
         open_files_do_not_replace_types = { "terminal", "Trouble", "qf", "Outline" },

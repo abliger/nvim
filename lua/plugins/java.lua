@@ -17,7 +17,7 @@ return {
       vim.api.nvim_create_autocmd("FileType", {
         pattern = "java",
         callback = function()
-          local project_name = vim.fn.fnamemodify(vim.fn.getcwd(), ":p:h:t")
+          local project_name = vim.fn.fnamemodify(root_dir, ":p:h:t")
           local workspace_dir = home .. "/.cache/jdtls/workspace/" .. project_name
 
           -- 查找项目根目录
@@ -27,12 +27,18 @@ return {
             root_dir = vim.fn.getcwd()
           end
 
+          -- 查找 java 可执行文件
+          local java_path = vim.fn.exepath("java")
+          if java_path == "" then
+            java_path = "/usr/bin/java"
+          end
+
           -- jdtls 配置
           local config = {
             cmd = {
               "jdtls",
               "--java-executable",
-              vim.fn.exepath("java") or "/usr/bin/java",
+              java_path,
               "-data",
               workspace_dir,
             },
@@ -142,6 +148,66 @@ return {
                 })
               end
             end,
+
+            -- 拦截补全响应，合并 jdtls 返回的完全重复项（label/kind/detail 相同），
+            -- 优先保留有 documentation（注释）的那条
+            handlers = {
+              ['textDocument/completion'] = function(err, result, ctx, config_handler)
+                if err or not result then
+                  return vim.lsp.handlers['textDocument/completion'](err, result, ctx, config_handler)
+                end
+
+                local items = result.items or result
+                if type(items) ~= 'table' then
+                  return vim.lsp.handlers['textDocument/completion'](err, result, ctx, config_handler)
+                end
+
+                local function has_doc(item)
+                  local doc = item.documentation
+                  if not doc then return false end
+                  if type(doc) == 'string' then return doc ~= '' end
+                  if type(doc) == 'table' then
+                    return doc.value and doc.value ~= ''
+                  end
+                  return false
+                end
+
+                local seen = {}
+                local filtered = {}
+                for _, item in ipairs(items) do
+                  local key = (item.label or '') .. '|' .. tostring(item.kind or '')
+                  if item.detail then
+                    key = key .. '|' .. item.detail
+                  end
+                  if item.labelDetails and item.labelDetails.detail then
+                    key = key .. '|' .. item.labelDetails.detail
+                  end
+
+                  if not seen[key] then
+                    seen[key] = item
+                    table.insert(filtered, item)
+                  else
+                    local existing = seen[key]
+                    if not has_doc(existing) and has_doc(item) then
+                      for i, v in ipairs(filtered) do
+                        if v == existing then
+                          filtered[i] = item
+                          seen[key] = item
+                          break
+                        end
+                      end
+                    end
+                  end
+                end
+
+                if result.items then
+                  result.items = filtered
+                else
+                  result = filtered
+                end
+                return vim.lsp.handlers['textDocument/completion'](err, result, ctx, config_handler)
+              end,
+            },
 
             init_options = {
               bundles = {},

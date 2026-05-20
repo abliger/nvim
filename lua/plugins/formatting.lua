@@ -13,6 +13,7 @@ return {
           -- Formatter
           "stylua",
           "shfmt",
+          "oxfmt",
           -- Linter
           "oxlint",
         },
@@ -29,20 +30,14 @@ return {
       require("conform").setup({
         formatters_by_ft = {
           -- Java 由 jdtls 处理，不额外配置 formatter
-          -- Vue / 前端 -> 使用 oxfmt
+          -- Vue / 前端 -> 使用 oxfmt（JS/TS/Vue/JSON）
           vue = { "oxfmt" },
           javascript = { "oxfmt" },
           javascriptreact = { "oxfmt" },
           typescript = { "oxfmt" },
           typescriptreact = { "oxfmt" },
-          css = { "oxfmt" },
-          scss = { "oxfmt" },
-          less = { "oxfmt" },
-          html = { "oxfmt" },
           json = { "oxfmt" },
           jsonc = { "oxfmt" },
-          yaml = { "oxfmt" },
-          markdown = { "oxfmt" },
           -- Lua
           lua = { "stylua" },
           -- Shell

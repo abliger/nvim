@@ -89,54 +89,6 @@ autocmd("BufReadPost", {
   end,
 })
 
--- 启动时如果参数是目录，自动打开 neo-tree
-autocmd("VimEnter", {
-  group = augroup("NeoTreeDirOpen", {}),
-  pattern = "*",
-  once = true,
-  callback = function()
-    if vim.fn.argc() > 0 and vim.fn.isdirectory(vim.fn.argv(0)) == 1 then
-      -- 删除默认的空白缓冲区
-      vim.schedule(function()
-        local buf = vim.api.nvim_get_current_buf()
-        local bufname = vim.api.nvim_buf_get_name(buf)
-        if bufname == "" then
-          vim.api.nvim_buf_delete(buf, { force = true })
-        end
-        -- 打开 neo-tree 并定位到该目录
-        require("neo-tree.command").execute({
-          dir = vim.fn.argv(0),
-          toggle = false,
-        })
-      end)
-    end
-  end,
-})
+-- 启动时若参数为目录，由 neo-tree 的 hijack_netrw_behavior 接管（见 plugins/ui.lua）
 
--- 自动切换目录到项目根
-autocmd("BufEnter", {
-  group = augroup("AutoRoot", {}),
-  pattern = "*",
-  callback = function()
-    -- 排除特殊文件类型，避免干扰 neo-tree 等插件的缓冲区操作
-    local exclude_fts = { "neo-tree", "NvimTree", "lazy", "mason", "TelescopePrompt", "nofile", "prompt" }
-    local current_ft = vim.bo.filetype
-    for _, ft in ipairs(exclude_fts) do
-      if current_ft == ft then
-        return
-      end
-    end
-
-    -- 排除无名称缓冲区和特殊缓冲区
-    local bufname = vim.api.nvim_buf_get_name(0)
-    local buftype = vim.bo.buftype
-    if buftype ~= "" or bufname == "" then
-      return
-    end
-
-    local root = vim.fs.root(0, { ".git", "pom.xml", "package.json", "vite.config.ts", "vue.config.js", "init.lua" })
-    if root then
-      vim.cmd("silent! lcd " .. root)
-    end
-  end,
-})
+-- 项目根目录自动切换由 project.nvim 处理（tools.lua），此处不再重复配置

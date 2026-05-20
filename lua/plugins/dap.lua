@@ -100,6 +100,32 @@ return {
       dap.listeners.before.event_terminated["dapui_config"] = function()
         dapui.close()
       end
+      dap.listeners.before.event_exited["dapui_config"] = function()
+        dapui.close()
+      end
+
+      -- Rust / C / C++ 调试适配器 (codelldb)
+      dap.adapters.codelldb = {
+        type = "server",
+        port = "${port}",
+        executable = {
+          command = vim.fn.stdpath("data") .. "/mason/packages/codelldb/extension/adapter/codelldb",
+          args = { "--port", "${port}" },
+        },
+      }
+
+      dap.configurations.rust = {
+        {
+          name = "Launch file",
+          type = "codelldb",
+          request = "launch",
+          program = function()
+            return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/target/debug/", "file")
+          end,
+          cwd = "${workspaceFolder}",
+          stopOnEntry = false,
+        },
+      }
 
       -- Java 调试适配器 (由 nvim-jdtls 自动配置)
       -- 这里可以添加其他语言的适配器配置

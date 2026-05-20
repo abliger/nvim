@@ -60,8 +60,8 @@ map("n", "<leader>ev", ":e ~/.config/nvim/init.lua<CR>", { desc = "编辑配置"
 
 -- 终端模式 --
 
--- 按 Esc 退出终端插入模式，回到普通模式
-map("t", "<Esc>", [[<C-\><C-n>]], { noremap = true })
+-- 按 Ctrl+Q 退出终端插入模式，回到普通模式（保留 <Esc> 给终端内程序使用）
+map("t", "<C-q>", [[<C-\><C-n>]], { noremap = true, desc = "退出终端插入模式" })
 
 -- 终端模式下直接切换窗口（先退出终端模式再切窗口）
 map("t", "<C-h>", [[<C-\><C-n><C-w>h]], { noremap = true })

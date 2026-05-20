@@ -20,7 +20,7 @@
 
 ### 必需
 
-- **Neovim >= 0.9**
+- **Neovim >= 0.11**
 - **Git**
 - **Node.js >= 16** (用于前端 LSP)
 - **Java >= 17** (用于 Java 开发)
@@ -50,9 +50,8 @@ brew install git ripgrep fd lazygit node
 # Java 开发
 brew install openjdk@17 maven
 
-# 格式化工具 (通过 Mason 自动安装，也可手动安装)
-npm install -g prettier
-brew install google-java-format stylua shfmt
+# 格式化工具 (大部分通过 Mason 自动安装，也可手动安装)
+brew install stylua shfmt
 ```
 
 ### 3. 首次启动
@@ -83,7 +82,6 @@ nvim
 - `tailwindcss` - Tailwind CSS 语言服务器
 - `lua_ls` - Lua 语言服务器
 - `oxfmt` - 前端代码格式化 (oxc)
-- `google-java-format` - Java 代码格式化
 - `oxlint` - JavaScript/TypeScript/Vue 静态检查 (oxc)
 
 ## 快捷键
@@ -116,7 +114,7 @@ nvim
 | `<C-h/j/k/l>` | 切换窗口 |
 | `<C-方向键>` | 调整窗口大小 |
 | `<S-h/l>` | 切换缓冲区 |
-| `<leader>c` | 关闭缓冲区 |
+| `<leader>bd` | 关闭缓冲区 |
 
 ### LSP (代码导航)
 
@@ -194,7 +192,7 @@ nvim
 - **自动补全**: nvim-cmp 提供基于 LSP、代码片段、缓冲区的智能补全
 - **语法高亮**: Treesitter 提供精准的语法高亮和代码折叠
 - **LSP 支持**: 完整的 Java (jdtls)、Vue (vue_ls)、TypeScript 支持
-- **代码格式化**: 自动格式化，支持 Prettier (前端) 和 google-java-format (Java)
+- **代码格式化**: 自动格式化，支持 oxfmt (前端) 和 jdtls 内置格式化 (Java)
 - **Git 集成**: Gitsigns 显示修改标记，Fugitive 提供 Git 命令
 - **调试支持**: DAP 框架，支持 Java 调试
 - **文件浏览**: Neo-tree 提供类似 IDE 的文件树

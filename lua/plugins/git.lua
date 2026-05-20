@@ -2,6 +2,16 @@
 -- Git 集成
 -- ==========================================
 
+-- 在 Neogit commit buffer 中自动注册 AI 生成快捷键
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "NeogitCommitMessage",
+  callback = function(args)
+    vim.keymap.set("n", "<C-g>", function()
+      require("config.git_ai").generate_and_insert()
+    end, { buffer = args.buf, desc = "AI 生成提交信息" })
+  end,
+})
+
 return {
   -- Git 标记
   {
@@ -199,6 +209,46 @@ return {
     cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewToggleFiles", "DiffviewFocusFiles" },
     keys = {
       { "<leader>gD", ":DiffviewOpen<CR>", desc = "打开差异视图" },
+    },
+  },
+
+  -- Neogit: 类似 VSCode 的 Git 面板
+  {
+    "NeogitOrg/neogit",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "sindrets/diffview.nvim",
+    },
+    config = function()
+      require("neogit").setup({
+        kind = "tab",
+        signs = {
+          section = { ">", "v" },
+          item = { ">", "v" },
+          hunk = { "", "" },
+        },
+        integrations = {
+          diffview = true,
+          telescope = true,
+        },
+      })
+    end,
+    keys = {
+      {
+        "<leader>gg",
+        function()
+          require("neogit").open({ kind = "vsplit" })
+          vim.cmd("wincmd H")
+        end,
+        desc = "打开 Neogit (左侧)",
+      },
+      {
+        "<leader>gC",
+        function()
+          require("config.git_ai").generate_and_copy()
+        end,
+        desc = "AI 生成提交信息到剪贴板",
+      },
     },
   },
 }
