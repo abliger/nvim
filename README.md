@@ -1,6 +1,6 @@
 # Neovim 配置 - Java + Vue 全栈开发
 
-为 `/Users/lvming/Downloads/project/` 项目定制的 Neovim 配置，支持 Java 后端和 Vue 前端开发。
+为 Java 全栈项目定制的 Neovim 配置，支持 Java 后端和 Vue 前端开发。
 ## 依赖要求
 
 ### 必需
