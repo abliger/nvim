@@ -1,21 +1,6 @@
 # Neovim 配置 - Java + Vue 全栈开发
 
 为 `/Users/lvming/Downloads/project/` 项目定制的 Neovim 配置，支持 Java 后端和 Vue 前端开发。
-
-## 项目结构
-
-```
-/Users/lvming/Downloads/project/
-├── smart_switch/              # Java 后端 (Maven 多模块)
-│   ├── smart-switch-service/
-│   ├── smart-switch-web/
-│   ├── smart-switch-common/
-│   ├── smart-switch-auth/
-│   └── pom.xml
-├── SmartSwitch/               # Vue3 + Taro 小程序前端
-└── SmartSwitchManagement/     # Vue3 + Vite + Element Plus 管理后台
-```
-
 ## 依赖要求
 
 ### 必需
