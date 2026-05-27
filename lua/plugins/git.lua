@@ -119,6 +119,7 @@ return {
     "tpope/vim-fugitive",
     cmd = { "Git", "G" },
     keys = {
+      { "<leader>ga", ":Git add .<CR>", desc = "Git 添加所有" },
       { "<leader>gs", ":Git<CR>", desc = "Git 状态" },
       { "<leader>gc", ":Git commit<CR>", desc = "Git 提交" },
       { "<leader>gp", ":Git push<CR>", desc = "Git 推送" },
