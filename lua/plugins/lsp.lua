@@ -89,7 +89,7 @@ return {
         map("<leader>dl", vim.diagnostic.open_float, "行诊断")
         map("[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, "上一个诊断")
         map("]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, "下一个诊断")
-        map("<leader>q", vim.diagnostic.setloclist, "定位列表")
+        map("<leader>ql", vim.diagnostic.setloclist, "定位列表")
 
         -- 格式化快捷键
         if client:supports_method("textDocument/formatting") then

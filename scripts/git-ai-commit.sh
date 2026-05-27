@@ -126,8 +126,14 @@ call_kimi() {
     exit 1
   fi
 
-  # 把 system prompt 和 user prompt 合并传给 kimi
-  printf '%s\n\n%s' "$SYSTEM_MSG" "$PROMPT" | kimi --quiet
+  # 使用临时文件传递 prompt，避免 stdin 行为不确定
+  local tmpfile
+  tmpfile=$(mktemp)
+  printf '%s\n\n%s' "$SYSTEM_MSG" "$PROMPT" > "$tmpfile"
+  kimi --quiet -p "$(cat "$tmpfile")"
+  local exit_code=$?
+  rm -f "$tmpfile"
+  return $exit_code
 }
 
 # --------------------------------------------------------------

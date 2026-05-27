@@ -17,15 +17,15 @@ return {
       vim.api.nvim_create_autocmd("FileType", {
         pattern = "java",
         callback = function()
-          local project_name = vim.fn.fnamemodify(root_dir, ":p:h:t")
-          local workspace_dir = home .. "/.cache/jdtls/workspace/" .. project_name
-
           -- 查找项目根目录
           local root_markers = { ".git", "mvnw", "gradlew", "pom.xml", "build.gradle" }
           local root_dir = require("jdtls.setup").find_root(root_markers)
           if not root_dir then
             root_dir = vim.fn.getcwd()
           end
+
+          local project_name = vim.fn.fnamemodify(root_dir, ":p:h:t")
+          local workspace_dir = home .. "/.cache/jdtls/workspace/" .. project_name
 
           -- 查找 java 可执行文件
           local java_path = vim.fn.exepath("java")

@@ -199,7 +199,7 @@ nvim
 - **模糊查找**: Telescope 快速搜索文件和文本
 - **终端集成**: Toggleterm 内置终端
 - **会话管理**: 自动保存和恢复工作会话
-- **AI Commit**: 支持 Ollama (本地) 和 OpenAI (远程) 自动生成 conventional commit message
+- **AI Commit**: 支持 Kimi CLI、Ollama (本地) 和 OpenAI (远程) 自动生成 conventional commit message
 
 ## Git AI Commit 配置
 
@@ -210,11 +210,11 @@ nvim
 在 `init.lua` 或任意配置文件中设置：
 
 ```lua
--- 选择 provider: "ollama" 或 "openai"
-vim.g.git_ai_provider = "ollama"
+-- 选择 provider: "kimi" / "ollama" / "openai"
+vim.g.git_ai_provider = "kimi"
 
--- 模型名称（ollama 默认: llama3，openai 默认: gpt-3.5-turbo）
-vim.g.git_ai_model = "codellama"
+-- ollama 模型名称（默认: llama3）
+vim.g.git_ai_model = "qwen:7b"
 
 -- Ollama 服务地址（默认: http://localhost:11434）
 vim.g.git_ai_ollama_url = "http://localhost:11434"
@@ -233,6 +233,20 @@ export GIT_AI_OLLAMA_URL=http://localhost:11434
 export OPENAI_API_KEY=sk-xxx
 export OPENAI_API_BASE=https://api.openai.com/v1
 ```
+
+### 3. Kimi CLI（默认）
+
+使用 `kimi` provider 时，需要提前安装 [Kimi Code CLI](https://www.kimi.com/code) 并登录：
+
+```bash
+# 安装
+uv tool install --python 3.13 kimi-cli
+
+# 登录（必须执行一次）
+kimi login
+```
+
+Kimi CLI 会利用当前会话的上下文（包括 git 变更）来生成提交信息，无需额外配置 API Key。
 
 ### 快捷键
 

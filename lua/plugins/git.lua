@@ -2,16 +2,6 @@
 -- Git 集成
 -- ==========================================
 
--- 在 Neogit commit buffer 中自动注册 AI 生成快捷键
-vim.api.nvim_create_autocmd("FileType", {
-  pattern = "NeogitCommitMessage",
-  callback = function(args)
-    vim.keymap.set("n", "<C-g>", function()
-      require("config.git_ai").generate_and_insert()
-    end, { buffer = args.buf, desc = "AI 生成提交信息" })
-  end,
-})
-
 return {
   -- Git 标记
   {
@@ -232,6 +222,16 @@ return {
           diffview = true,
           telescope = true,
         },
+      })
+
+      -- 在 Neogit commit buffer 中注册 AI 生成快捷键
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "NeogitCommitMessage",
+        callback = function(args)
+          vim.keymap.set("n", "<C-g>", function()
+            require("config.git_ai").generate_and_insert()
+          end, { buffer = args.buf, desc = "AI 生成提交信息" })
+        end,
       })
     end,
     keys = {

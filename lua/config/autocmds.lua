@@ -17,7 +17,7 @@ local function im_select_available()
   return vim.fn.executable(im_select_path) == 1
 end
 
--- 自动下载安装 im-select
+-- 异步下载安装 im-select
 local function install_im_select()
   local bin_dir = vim.fn.expand("~/.local/bin")
   vim.fn.mkdir(bin_dir, "p")
@@ -30,31 +30,45 @@ local function install_im_select()
     url = "https://raw.githubusercontent.com/daipeihust/im-select/master/macOS/out/intel/im-select"
   end
 
-  vim.notify("im-select 未找到，正在下载 (" .. arch .. ")...", vim.log.levels.INFO)
+  vim.notify("im-select 未找到，正在后台下载 (" .. arch .. ")...", vim.log.levels.INFO)
 
-  local cmd = string.format(
+  local cmd = { "bash", "-c", string.format(
     "curl -fsSL -o %s %s && chmod +x %s",
     vim.fn.shellescape(im_select_path),
     vim.fn.shellescape(url),
     vim.fn.shellescape(im_select_path)
-  )
+  )}
 
-  local result = vim.fn.system(cmd)
-  if vim.v.shell_error ~= 0 then
-    vim.notify("im-select 下载失败: " .. vim.trim(result), vim.log.levels.ERROR)
-    return false
-  end
+  local stderr = {}
 
-  if vim.fn.executable(im_select_path) ~= 1 then
-    vim.notify("im-select 下载后仍无法执行", vim.log.levels.ERROR)
-    return false
-  end
-
-  vim.notify("im-select 安装成功: " .. im_select_path, vim.log.levels.INFO)
-  return true
+  vim.fn.jobstart(cmd, {
+    stderr_buffered = true,
+    on_stderr = function(_, data)
+      if data then
+        for _, line in ipairs(data) do
+          if line ~= "" then
+            table.insert(stderr, line)
+          end
+        end
+      end
+    end,
+    on_exit = function(_, exit_code)
+      vim.schedule(function()
+        if exit_code ~= 0 then
+          vim.notify("im-select 下载失败: " .. table.concat(stderr, "\n"), vim.log.levels.ERROR)
+          return
+        end
+        if vim.fn.executable(im_select_path) ~= 1 then
+          vim.notify("im-select 下载后仍无法执行", vim.log.levels.ERROR)
+          return
+        end
+        vim.notify("im-select 安装成功: " .. im_select_path, vim.log.levels.INFO)
+      end)
+    end,
+  })
 end
 
--- 若未安装则尝试自动安装
+-- 若未安装则启动后台下载
 if not im_select_available() then
   install_im_select()
 end
