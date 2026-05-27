@@ -199,6 +199,47 @@ nvim
 - **模糊查找**: Telescope 快速搜索文件和文本
 - **终端集成**: Toggleterm 内置终端
 - **会话管理**: 自动保存和恢复工作会话
+- **AI Commit**: 支持 Ollama (本地) 和 OpenAI (远程) 自动生成 conventional commit message
+
+## Git AI Commit 配置
+
+提交信息由 `scripts/git-ai-commit.sh` 生成，支持以下配置方式（优先级从高到低）：
+
+### 1. Neovim 全局变量（推荐）
+
+在 `init.lua` 或任意配置文件中设置：
+
+```lua
+-- 选择 provider: "ollama" 或 "openai"
+vim.g.git_ai_provider = "ollama"
+
+-- 模型名称（ollama 默认: llama3，openai 默认: gpt-3.5-turbo）
+vim.g.git_ai_model = "codellama"
+
+-- Ollama 服务地址（默认: http://localhost:11434）
+vim.g.git_ai_ollama_url = "http://localhost:11434"
+
+-- OpenAI 兼容 API 的配置
+vim.g.git_ai_openai_api_key = "sk-xxx"
+vim.g.git_ai_openai_api_base = "https://api.openai.com/v1"
+```
+
+### 2. 环境变量
+
+```bash
+export GIT_AI_PROVIDER=openai
+export GIT_AI_MODEL=gpt-4o
+export GIT_AI_OLLAMA_URL=http://localhost:11434
+export OPENAI_API_KEY=sk-xxx
+export OPENAI_API_BASE=https://api.openai.com/v1
+```
+
+### 快捷键
+
+| 快捷键 | 功能 |
+|--------|------|
+| `<C-g>` (Neogit commit buffer) | AI 生成提交信息并插入 |
+| `<leader>gC` | AI 生成提交信息到剪贴板 |
 
 ## 故障排除
 

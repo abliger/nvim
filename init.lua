@@ -7,6 +7,10 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+-- Git AI Commit 配置：使用 kimi-cli
+vim.g.git_ai_provider = "kimi" -- ollama 使用 本地调用 ｜ openai
+-- vim.g.git_ai_modle = "codellama:7b"
+
 -- 加载基础配置
 require("config.options")
 require("config.keymaps")

@@ -17,6 +17,48 @@ local function im_select_available()
   return vim.fn.executable(im_select_path) == 1
 end
 
+-- 自动下载安装 im-select
+local function install_im_select()
+  local bin_dir = vim.fn.expand("~/.local/bin")
+  vim.fn.mkdir(bin_dir, "p")
+
+  local arch = vim.trim(vim.fn.system("uname -m"))
+  local url
+  if arch == "arm64" then
+    url = "https://raw.githubusercontent.com/daipeihust/im-select/master/macOS/out/apple/im-select"
+  else
+    url = "https://raw.githubusercontent.com/daipeihust/im-select/master/macOS/out/intel/im-select"
+  end
+
+  vim.notify("im-select 未找到，正在下载 (" .. arch .. ")...", vim.log.levels.INFO)
+
+  local cmd = string.format(
+    "curl -fsSL -o %s %s && chmod +x %s",
+    vim.fn.shellescape(im_select_path),
+    vim.fn.shellescape(url),
+    vim.fn.shellescape(im_select_path)
+  )
+
+  local result = vim.fn.system(cmd)
+  if vim.v.shell_error ~= 0 then
+    vim.notify("im-select 下载失败: " .. vim.trim(result), vim.log.levels.ERROR)
+    return false
+  end
+
+  if vim.fn.executable(im_select_path) ~= 1 then
+    vim.notify("im-select 下载后仍无法执行", vim.log.levels.ERROR)
+    return false
+  end
+
+  vim.notify("im-select 安装成功: " .. im_select_path, vim.log.levels.INFO)
+  return true
+end
+
+-- 若未安装则尝试自动安装
+if not im_select_available() then
+  install_im_select()
+end
+
 -- 获取当前输入法
 local function get_current_im()
   local output = vim.fn.system(im_select_path)
