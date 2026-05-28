@@ -30,92 +30,30 @@ return {
           },
         },
       })
-
-      -- Lazygit 终端
-      local Terminal = require("toggleterm.terminal").Terminal
-      local lazygit = Terminal:new({
-        cmd = "lazygit",
-        dir = "git_dir",
-        direction = "float",
-        float_opts = {
-          border = "double",
-        },
-        on_open = function(term)
-          vim.cmd("startinsert!")
-          vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
-        end,
-        on_close = function()
-          vim.cmd("startinsert!")
-        end,
-      })
-
-      function _lazygit_toggle()
-        lazygit:toggle()
-      end
-
-      -- 运行当前文件的终端（按文件类型自动选择命令）
-      local run_term = Terminal:new({
-        direction = "float",
-        close_on_exit = false,
-        float_opts = { border = "curved" },
-        on_open = function(term)
-          vim.cmd("startinsert!")
-          vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
-        end,
-      })
-
-      function _run_current_file()
-        local ft = vim.bo.filetype
-        local filepath = vim.fn.expand("%:p")
-        local cmd = nil
-
-        local runners = {
-          python = "python3",
-          javascript = "node",
-          typescript = "npx ts-node",
-          sh = "bash",
-          lua = "lua",
-          go = "go run",
-          rust = "cargo run",
-          java = "java",
-        }
-
-        if runners[ft] then
-          cmd = runners[ft] .. " " .. vim.fn.shellescape(filepath)
-        end
-
-        if cmd then
-          run_term.cmd = cmd
-          run_term:open()
-        else
-          vim.notify("没有为文件类型 '" .. ft .. "' 配置运行命令", vim.log.levels.WARN)
-        end
-      end
-
-      -- 运行自定义命令（会弹出输入框）
-      function _run_custom_command()
-        vim.ui.input({ prompt = "Run: " }, function(input)
-          if input and input ~= "" then
-            local custom = Terminal:new({
-              cmd = input,
-              direction = "float",
-              close_on_exit = false,
-              float_opts = { border = "curved" },
-              on_open = function(term)
-                vim.cmd("startinsert!")
-                vim.api.nvim_buf_set_keymap(term.bufnr, "n", "q", "<cmd>close<CR>", { noremap = true, silent = true })
-              end,
-            })
-            custom:open()
-          end
-        end)
-      end
     end,
     keys = {
-      { "<leader>t", ":ToggleTerm<CR>", desc = "切换终端" },
-      { "<leader>tg", ":lua _lazygit_toggle()<CR>", desc = "切换 lazygit" },
-      { "<leader>tr", ":lua _run_current_file()<CR>", desc = "运行当前文件" },
-      { "<leader>tc", ":lua _run_custom_command()<CR>", desc = "运行自定义命令" },
+      { "<leader>t", "<cmd>ToggleTerm<cr>", desc = "切换终端" },
+      {
+        "<leader>tg",
+        function()
+          require("config.toggleterm_utils").lazygit:toggle()
+        end,
+        desc = "切换 lazygit",
+      },
+      {
+        "<leader>tr",
+        function()
+          require("config.toggleterm_utils").run_current_file()
+        end,
+        desc = "运行当前文件",
+      },
+      {
+        "<leader>tc",
+        function()
+          require("config.toggleterm_utils").run_custom_command()
+        end,
+        desc = "运行自定义命令",
+      },
     },
   },
 
@@ -276,7 +214,7 @@ return {
     config = function()
       require("project_nvim").setup({
         detection_methods = { "pattern", "lsp" },
-        patterns = { ".git", "pom.xml", "package.json", "=src" },
+        patterns = { ".git", "pom.xml", "package.json" },
         silent_chdir = true,
         scope_chdir = "global",
       })
@@ -288,7 +226,6 @@ return {
     url = "https://codeberg.org/andyg/leap.nvim",
     event = "VeryLazy",
     config = function()
-      local leap = require("leap")
       -- 创建重复跳转的快捷键 (Sneak-style 映射)
       vim.keymap.set({ "n", "x", "o" }, "s", "<Plug>(leap-forward)")
       vim.keymap.set({ "n", "x", "o" }, "S", "<Plug>(leap-backward)")
@@ -321,7 +258,7 @@ return {
         },
         stream = "stdout",
         ignore_exitcode = true,
-        parser = function(output, bufnr, linter_cwd)
+        parser = function(output, bufnr)
           if output == "" then
             return {}
           end
@@ -340,8 +277,8 @@ return {
               end_lnum = (msg.endLine or msg.line or 1) - 1,
               end_col = (msg.endColumn or msg.column or 1) - 1,
               severity = msg.severity == 2 and vim.diagnostic.severity.ERROR
-                         or msg.severity == 1 and vim.diagnostic.severity.WARNING
-                         or vim.diagnostic.severity.INFO,
+                  or msg.severity == 1 and vim.diagnostic.severity.WARN
+                  or vim.diagnostic.severity.INFO,
               message = msg.message,
               source = "oxlint",
               code = msg.ruleId,
