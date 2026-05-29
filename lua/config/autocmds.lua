@@ -148,3 +148,70 @@ autocmd("BufReadPost", {
 -- 启动时若参数为目录，由 neo-tree 的 hijack_netrw_behavior 接管（见 plugins/ui.lua）
 
 -- 项目根目录自动切换由 project.nvim 处理（tools.lua），此处不再重复配置
+
+-- ==========================================
+-- 打开项目时自动检查 GitHub 远程更新
+-- ==========================================
+local function check_remote_update()
+  local git_dir = vim.fn.finddir(".git", vim.fn.getcwd() .. ";")
+  if git_dir == "" then
+    return
+  end
+
+  local fetch_cmd = { "git", "fetch", "--quiet" }
+
+  vim.fn.jobstart(fetch_cmd, {
+    on_exit = function(_, exit_code)
+      if exit_code ~= 0 then
+        return
+      end
+
+      vim.schedule(function()
+        local ahead = vim.trim(vim.fn.system("git rev-list HEAD..@{upstream} --count 2>/dev/null"))
+        local behind = vim.trim(vim.fn.system("git rev-list @{upstream}..HEAD --count 2>/dev/null"))
+
+        local ahead_num = tonumber(ahead) or 0
+        local behind_num = tonumber(behind) or 0
+
+        if ahead_num > 0 and behind_num > 0 then
+          local choice = vim.fn.confirm(
+            string.format("远程有 %d 个新提交，本地有 %d 个未推送提交", ahead_num, behind_num),
+            "&Pull\n&Push\n&Cancel",
+            1
+          )
+          if choice == 1 then
+            vim.cmd("Git pull")
+          elseif choice == 2 then
+            vim.cmd("Git push")
+          end
+        elseif ahead_num > 0 then
+          local choice = vim.fn.confirm(
+            string.format("远程有 %d 个新提交，是否拉取？", ahead_num),
+            "&Pull\n&Cancel",
+            1
+          )
+          if choice == 1 then
+            vim.cmd("Git pull")
+          end
+        elseif behind_num > 0 then
+          local choice = vim.fn.confirm(
+            string.format("本地有 %d 个未推送提交，是否推送？", behind_num),
+            "&Push\n&Cancel",
+            1
+          )
+          if choice == 1 then
+            vim.cmd("Git push")
+          end
+        end
+      end)
+    end,
+  })
+end
+
+autocmd("VimEnter", {
+  group = augroup("GitRemoteUpdateCheck", {}),
+  once = true,
+  callback = function()
+    vim.defer_fn(check_remote_update, 1000)
+  end,
+})
