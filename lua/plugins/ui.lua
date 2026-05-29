@@ -35,7 +35,7 @@ return {
       require("bufferline").setup({
         options = {
           mode = "buffers",
-          separator_style = "slant",
+          separator_style = "thin",
           always_show_bufferline = true,
           diagnostics = "nvim_lsp",
           offsets = {

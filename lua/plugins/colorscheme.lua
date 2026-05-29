@@ -10,13 +10,19 @@ return {
     config = function()
       require("tokyonight").setup({
         style = "night",
-        transparent = false,
+        transparent = true,
         styles = {
           comments = { italic = true },
           keywords = { italic = true },
           functions = { bold = true },
         },
-        sidebars = { "qf", "vista_kind", "terminal", "packer", "neo-tree" },
+        sidebars = { "qf", "vista_kind", "terminal", "packer" },
+        on_highlights = function(hl, c)
+          hl.NeoTreeNormal = { link = "Normal" }
+          hl.NeoTreeNormalNC = { link = "NormalNC" }
+          hl.NeoTreeEndOfBuffer = { link = "EndOfBuffer" }
+          hl.NeoTreeWinSeparator = { link = "WinSeparator" }
+        end,
       })
       vim.cmd.colorscheme("tokyonight")
     end,
