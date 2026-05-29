@@ -335,6 +335,34 @@ return {
       })
       vim.lsp.enable("dockerls")
 
+      -- Swift (sourcekit-lsp)
+      local function find_sourcekit_lsp()
+        local xcrun_path = vim.trim(vim.fn.system("xcrun --find sourcekit-lsp 2>/dev/null"))
+        if vim.v.shell_error == 0 and xcrun_path ~= "" then
+          return { xcrun_path }
+        end
+        local paths = {
+          "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/sourcekit-lsp",
+          "/Applications/Xcode-beta.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/sourcekit-lsp",
+          "/Library/Developer/CommandLineTools/usr/bin/sourcekit-lsp",
+        }
+        for _, p in ipairs(paths) do
+          if vim.fn.executable(p) == 1 then
+            return { p }
+          end
+        end
+        return { "sourcekit-lsp" }
+      end
+
+      vim.lsp.config("sourcekit", {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        cmd = find_sourcekit_lsp(),
+        filetypes = { "swift", "objective-c", "objective-cpp" },
+        root_markers = { "Package.swift", ".git", "project.yml", "Project.swift" },
+      })
+      vim.lsp.enable("sourcekit")
+
       -- Rust
       vim.lsp.config("rust_analyzer", {
         capabilities = capabilities,

@@ -127,6 +127,20 @@ return {
         },
       }
 
+      -- Swift 调试 (使用 codelldb)
+      dap.configurations.swift = {
+        {
+          name = "Launch",
+          type = "codelldb",
+          request = "launch",
+          program = function()
+            return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/.build/debug/", "file")
+          end,
+          cwd = "${workspaceFolder}",
+          stopOnEntry = false,
+        },
+      }
+
       -- Java 调试适配器 (由 nvim-jdtls 自动配置)
       -- 这里可以添加其他语言的适配器配置
     end,

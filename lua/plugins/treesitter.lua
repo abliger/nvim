@@ -5,6 +5,7 @@
 
 local ensure_installed = {
   "java",
+  "swift",
   "vue",
   "javascript",
   "typescript",
