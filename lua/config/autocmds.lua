@@ -153,12 +153,13 @@ autocmd("BufReadPost", {
 -- 打开项目时自动检查 GitHub 远程更新
 -- ==========================================
 local function check_remote_update()
-  local git_dir = vim.fn.finddir(".git", vim.fn.getcwd() .. ";")
-  if git_dir == "" then
+  local nvim_config_dir = vim.fn.stdpath("config")
+  local git_dir = nvim_config_dir .. "/.git"
+  if vim.fn.isdirectory(git_dir) == 0 then
     return
   end
 
-  local fetch_cmd = { "git", "fetch", "--quiet" }
+  local fetch_cmd = { "git", "-C", nvim_config_dir, "fetch", "--quiet" }
 
   vim.fn.jobstart(fetch_cmd, {
     on_exit = function(_, exit_code)
@@ -167,11 +168,22 @@ local function check_remote_update()
       end
 
       vim.schedule(function()
-        local ahead = vim.trim(vim.fn.system("git rev-list HEAD..@{upstream} --count 2>/dev/null"))
-        local behind = vim.trim(vim.fn.system("git rev-list @{upstream}..HEAD --count 2>/dev/null"))
+        local ahead = vim.trim(vim.fn.system("git -C " .. vim.fn.shellescape(nvim_config_dir) .. " rev-list HEAD..@{upstream} --count 2>/dev/null"))
+        local behind = vim.trim(vim.fn.system("git -C " .. vim.fn.shellescape(nvim_config_dir) .. " rev-list @{upstream}..HEAD --count 2>/dev/null"))
 
         local ahead_num = tonumber(ahead) or 0
         local behind_num = tonumber(behind) or 0
+
+        local function git_pull()
+          vim.cmd("lcd " .. vim.fn.fnameescape(nvim_config_dir))
+          vim.cmd("Git pull")
+          vim.cmd("lcd -")
+        end
+        local function git_push()
+          vim.cmd("lcd " .. vim.fn.fnameescape(nvim_config_dir))
+          vim.cmd("Git push")
+          vim.cmd("lcd -")
+        end
 
         if ahead_num > 0 and behind_num > 0 then
           local choice = vim.fn.confirm(
@@ -180,9 +192,9 @@ local function check_remote_update()
             1
           )
           if choice == 1 then
-            vim.cmd("Git pull")
+            git_pull()
           elseif choice == 2 then
-            vim.cmd("Git push")
+            git_push()
           end
         elseif ahead_num > 0 then
           local choice = vim.fn.confirm(
@@ -191,7 +203,7 @@ local function check_remote_update()
             1
           )
           if choice == 1 then
-            vim.cmd("Git pull")
+            git_pull()
           end
         elseif behind_num > 0 then
           local choice = vim.fn.confirm(
@@ -200,7 +212,7 @@ local function check_remote_update()
             1
           )
           if choice == 1 then
-            vim.cmd("Git push")
+            git_push()
           end
         end
       end)
