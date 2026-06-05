@@ -42,9 +42,16 @@ return {
           lua = { "stylua" },
           -- Shell
           sh = { "shfmt" },
+          -- Go
+          go = { "gofumpt" },
         },
-
         formatters = {
+          gofumpt = {
+            command = "gofumpt",
+            args = {},
+            stdin = true,
+          },
+
           oxfmt = {
             command = "oxfmt",
             args = { "--stdin-filepath", "$FILENAME" },

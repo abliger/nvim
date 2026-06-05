@@ -26,6 +26,10 @@ local ensure_installed = {
   "markdown_inline",
   "regex",
   "dockerfile",
+  "go",
+  "gomod",
+  "gosum",
+  "gowork",
 }
 
 return {

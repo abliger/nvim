@@ -44,6 +44,8 @@ return {
           "jsonls",
           -- Rust
           "rust_analyzer",
+          -- Go
+          "gopls",
           -- 其他
           "lua_ls",
           "yamlls",
@@ -362,6 +364,32 @@ return {
         root_markers = { "Package.swift", ".git", "project.yml", "Project.swift" },
       })
       vim.lsp.enable("sourcekit")
+
+      -- Go
+      vim.lsp.config("gopls", {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        settings = {
+          gopls = {
+            analyses = {
+              unusedparams = true,
+              shadow = true,
+            },
+            staticcheck = true,
+            gofumpt = true,
+            hints = {
+              assignVariableTypes = true,
+              compositeLiteralFields = true,
+              compositeLiteralTypes = true,
+              constantValues = true,
+              functionTypeParameters = true,
+              parameterNames = true,
+              rangeVariableTypes = true,
+            },
+          },
+        },
+      })
+      vim.lsp.enable("gopls")
 
       -- Rust
       vim.lsp.config("rust_analyzer", {
