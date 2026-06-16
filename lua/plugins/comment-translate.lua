@@ -112,14 +112,11 @@ local function smart_hover()
     if text and text ~= "" and node_type and (node_type:find("comment") or node_type:find("string")) then
       local ok_ui, hover_ui = pcall(require, "comment-translate.ui.hover")
       if not ok_ui then
-        vim.notify("comment-translate.ui.hover 加载失败", vim.log.levels.ERROR)
         return
       end
 
-      vim.notify("正在翻译: " .. text:sub(1, 40) .. (#text > 40 and "..." or ""), vim.log.levels.INFO)
       baidu_translate(text, TARGET_LANGUAGE, function(result)
         if not result or result == "" then
-          vim.notify("翻译未返回结果，请检查 BAIDU_APPID / BAIDU_KEY", vim.log.levels.ERROR)
           return
         end
 
@@ -137,24 +134,16 @@ local function smart_hover()
         hover_ui.show(table.concat(lines, "\n"))
       end)
       return
-    else
-      vim.notify("光标未在注释或字符串上，回退到 LSP hover", vim.log.levels.INFO)
     end
-  else
-    vim.notify("comment-translate.parser 加载失败", vim.log.levels.ERROR)
   end
 
   -- 2. 否则获取 LSP hover 并翻译（保留原文对照）
   local has_lsp = #vim.lsp.get_clients({ bufnr = bufnr }) > 0
   if has_lsp then
-    vim.notify("请求 LSP hover...", vim.log.levels.INFO)
     local params = vim.lsp.util.make_position_params()
     vim.lsp.buf_request_all(bufnr, "textDocument/hover", params, function(responses)
-      vim.notify("LSP hover 回调触发，响应数: " .. tostring(vim.tbl_count(responses)), vim.log.levels.INFO)
-
       local contents = nil
-      for client_id, response in pairs(responses) do
-        vim.notify("客户端 " .. client_id .. " 结果: " .. (response.result and "有" or "无") .. " 错误: " .. (response.error and "有" or "无"), vim.log.levels.INFO)
+      for _, response in pairs(responses) do
         if response.result and response.result.contents then
           contents = response.result.contents
           break
@@ -162,30 +151,23 @@ local function smart_hover()
       end
 
       if not contents then
-        vim.notify("没有 LSP hover 信息", vim.log.levels.INFO)
         return
       end
 
       local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(contents)
       local original = table.concat(markdown_lines, "\n")
-      vim.notify("LSP hover 原文长度: " .. tostring(#original), vim.log.levels.INFO)
       if original == "" then
-        vim.notify("LSP hover 内容为空", vim.log.levels.INFO)
         return
       end
 
       local ok_ui, hover_ui = pcall(require, "comment-translate.ui.hover")
       if not ok_ui then
-        vim.notify("comment-translate.ui.hover 加载失败", vim.log.levels.ERROR)
         return
       end
 
-      vim.notify("正在翻译 LSP hover...", vim.log.levels.INFO)
       baidu_translate(original, TARGET_LANGUAGE, function(translated)
-        vim.notify("翻译回调，结果长度: " .. tostring(translated and #translated or 0), vim.log.levels.INFO)
         if not translated or translated == "" then
           -- 翻译失败时回退显示原文
-          vim.notify("翻译失败或为空，回退显示原文", vim.log.levels.WARN)
           hover_ui.show(original)
           return
         end
