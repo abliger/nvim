@@ -195,6 +195,15 @@ return {
         },
       })
 
+      -- 把可能含换行的字符串拆成多行，避免 nvim_buf_set_lines 报错
+      local function append_multiline(target, str)
+        if not str or str == "" then
+          table.insert(target, "(无)")
+          return
+        end
+        vim.list_extend(target, vim.split(str, "\n", { plain = true }))
+      end
+
       -- 手动测试命令 :BaiduTranslateTest hello world
       vim.api.nvim_create_user_command("BaiduTranslateTest", function(opts)
         local text = opts.args
@@ -284,16 +293,16 @@ return {
               "",
               "退出码: " .. tostring(obj.code),
               "详细日志 (stderr):",
-              obj.stderr or "(无)",
-              "",
-              "原始响应 (stdout): " .. (obj.stdout or "(空)"),
             }
+            append_multiline(result_lines, obj.stderr)
+            table.insert(result_lines, "")
+            table.insert(result_lines, "原始响应 (stdout): " .. (obj.stdout or "(空)"))
 
             local ok, json = pcall(vim.fn.json_decode, obj.stdout or "")
             if ok and json then
               table.insert(result_lines, "")
               table.insert(result_lines, "解析结果:")
-              table.insert(result_lines, vim.inspect(json))
+              append_multiline(result_lines, vim.inspect(json))
               if json.trans_result and #json.trans_result > 0 then
                 table.insert(result_lines, "")
                 table.insert(result_lines, "译文:")
