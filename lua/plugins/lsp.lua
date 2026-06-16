@@ -83,40 +83,7 @@ return {
         map("gD", vim.lsp.buf.declaration, "跳转到声明")
         map("gr", vim.lsp.buf.references, "查找引用")
         map("gi", vim.lsp.buf.implementation, "跳转到实现")
-        -- K：光标在注释/字符串上时翻译为中文（保留原文），否则使用 LSP hover
-        map("K", function()
-          local ok_parser, parser = pcall(require, "comment-translate.parser")
-          if ok_parser then
-            local text = parser.get_text_at_cursor(bufnr)
-            if text and text ~= "" then
-              local ok_translate, translate = pcall(require, "comment-translate.translate")
-              local ok_ui, hover_ui = pcall(require, "comment-translate.ui.hover")
-              local ok_config, ct_config = pcall(require, "comment-translate.config")
-              if ok_translate and ok_ui and ok_config then
-                translate.translate(text, ct_config.config.target_language, nil, function(result)
-                  if not result or result == "" then
-                    vim.notify("翻译失败", vim.log.levels.ERROR)
-                    return
-                  end
-                  local lines = {
-                    "# 原文",
-                    "",
-                    "```text",
-                    text,
-                    "```",
-                    "",
-                    "# 译文（" .. ct_config.config.target_language .. "）",
-                    "",
-                    result,
-                  }
-                  hover_ui.show(table.concat(lines, "\n"))
-                end)
-                return
-              end
-            end
-          end
-          vim.lsp.buf.hover()
-        end, "悬停文档 / 翻译注释")
+        map("K", vim.lsp.buf.hover, "悬停文档")
         map("<C-k>", vim.lsp.buf.signature_help, "签名帮助")
         map("<leader>rn", vim.lsp.buf.rename, "重命名符号")
         map("<leader>ca", vim.lsp.buf.code_action, "代码操作")
