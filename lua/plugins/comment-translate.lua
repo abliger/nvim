@@ -47,8 +47,9 @@ local function baidu_translate(text, target_lang, callback)
     to_lang = "en"
   end
 
-  local body = string.format(
-    "q=%s&from=auto&to=%s&appid=%s&salt=%s&sign=%s",
+  -- 百度翻译官方示例使用 GET，参数放在 URL 中
+  local url = string.format(
+    "https://fanyi-api.baidu.com/api/trans/vip/translate?q=%s&from=auto&to=%s&appid=%s&salt=%s&sign=%s",
     urlencode(text),
     to_lang,
     urlencode(appid),
@@ -61,13 +62,7 @@ local function baidu_translate(text, target_lang, callback)
     "-sL",
     "--max-time",
     "10",
-    "-X",
-    "POST",
-    "https://fanyi-api.baidu.com/api/trans/vip/translate",
-    "-H",
-    "Content-Type: application/x-www-form-urlencoded",
-    "--data",
-    body,
+    url,
   }, { text = true }, function(obj)
     vim.schedule(function()
       if obj.code ~= 0 then
@@ -246,8 +241,8 @@ return {
         local salt = tostring(os.time()) .. tostring(math.random(1000, 9999))
         local sign_str = appid .. text .. salt .. key
         local sign = md5(sign_str)
-        local body = string.format(
-          "q=%s&from=auto&to=zh&appid=%s&salt=%s&sign=%s",
+        local test_url = string.format(
+          "https://fanyi-api.baidu.com/api/trans/vip/translate?q=%s&from=auto&to=zh&appid=%s&salt=%s&sign=%s",
           urlencode(text),
           urlencode(appid),
           salt,
@@ -257,7 +252,7 @@ return {
         vim.list_extend(lines, {
           "签名字符串: " .. sign_str,
           "计算签名: " .. sign,
-          "请求体: " .. body,
+          "请求 URL: " .. test_url,
           "",
           "正在请求...",
         })
@@ -279,13 +274,7 @@ return {
           "-sL",
           "--max-time",
           "10",
-          "-X",
-          "POST",
-          "https://fanyi-api.baidu.com/api/trans/vip/translate",
-          "-H",
-          "Content-Type: application/x-www-form-urlencoded",
-          "--data",
-          body,
+          test_url,
         }, { text = true }, function(obj)
           vim.schedule(function()
             local result_lines = {
