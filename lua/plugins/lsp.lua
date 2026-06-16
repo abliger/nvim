@@ -44,8 +44,6 @@ return {
           "jsonls",
           -- Rust
           "rust_analyzer",
-          -- C / C++
-          "clangd",
           -- Go
           "gopls",
           -- 其他
@@ -54,7 +52,9 @@ return {
           "dockerls",
           "tailwindcss",
         },
-        automatic_installation = true,
+        -- macOS 已通过 Command Line Tools 提供 /usr/bin/clangd，
+        -- 排除 clangd 避免 Mason 因网络问题反复安装失败。
+        automatic_installation = { exclude = { "clangd" } },
       })
     end,
   },
