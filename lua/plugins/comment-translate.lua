@@ -10,10 +10,20 @@ local function urlencode(str)
   end)
 end
 
--- 使用系统 md5 命令计算百度翻译签名（macOS 兼容）
+-- 使用系统 md5 命令计算百度翻译签名
+-- 兼容两种输出格式：
+--   macOS 默认: MD5 ("string") = 5d41402abc4b2a76b9719d911017c592
+--   简化输出:  5d41402abc4b2a76b9719d911017c592
 local function md5(str)
   local output = vim.fn.system("md5 -s " .. vim.fn.shellescape(str))
-  return output:match("= (%x+)") or ""
+  -- 先尝试匹配 "= hash" 格式
+  local hash = output:match("= (%x+)")
+  if hash then
+    return hash
+  end
+  -- 否则匹配整行纯 32 位十六进制
+  hash = output:match("^(%x+)%s*$")
+  return hash or ""
 end
 
 local function baidu_translate(text, target_lang, callback)
