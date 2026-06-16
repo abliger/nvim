@@ -147,10 +147,14 @@ local function smart_hover()
   -- 2. 否则获取 LSP hover 并翻译（保留原文对照）
   local has_lsp = #vim.lsp.get_clients({ bufnr = bufnr }) > 0
   if has_lsp then
+    vim.notify("请求 LSP hover...", vim.log.levels.INFO)
     local params = vim.lsp.util.make_position_params()
     vim.lsp.buf_request_all(bufnr, "textDocument/hover", params, function(responses)
+      vim.notify("LSP hover 回调触发，响应数: " .. tostring(vim.tbl_count(responses)), vim.log.levels.INFO)
+
       local contents = nil
-      for _, response in pairs(responses) do
+      for client_id, response in pairs(responses) do
+        vim.notify("客户端 " .. client_id .. " 结果: " .. (response.result and "有" or "无") .. " 错误: " .. (response.error and "有" or "无"), vim.log.levels.INFO)
         if response.result and response.result.contents then
           contents = response.result.contents
           break
@@ -164,6 +168,7 @@ local function smart_hover()
 
       local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(contents)
       local original = table.concat(markdown_lines, "\n")
+      vim.notify("LSP hover 原文长度: " .. tostring(#original), vim.log.levels.INFO)
       if original == "" then
         vim.notify("LSP hover 内容为空", vim.log.levels.INFO)
         return
@@ -177,8 +182,10 @@ local function smart_hover()
 
       vim.notify("正在翻译 LSP hover...", vim.log.levels.INFO)
       baidu_translate(original, TARGET_LANGUAGE, function(translated)
+        vim.notify("翻译回调，结果长度: " .. tostring(translated and #translated or 0), vim.log.levels.INFO)
         if not translated or translated == "" then
           -- 翻译失败时回退显示原文
+          vim.notify("翻译失败或为空，回退显示原文", vim.log.levels.WARN)
           hover_ui.show(original)
           return
         end
