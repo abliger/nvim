@@ -374,7 +374,18 @@ return {
       -- 全局 K 键：翻译注释/字符串 或 LSP hover
       vim.keymap.set("n", "K", smart_hover, { desc = "悬停文档 / 翻译注释" })
 
-      -- LSP 附加后，用同样的逻辑覆盖 buffer-local 的 K 映射
+      -- 为所有已有 LSP 的 buffer 设置 K 映射
+      local function setup_k_for_buffer(bufnr)
+        if #vim.lsp.get_clients({ bufnr = bufnr }) > 0 then
+          vim.keymap.set("n", "K", smart_hover, {
+            buffer = bufnr,
+            desc = "悬停文档 / 翻译注释",
+            silent = true,
+          })
+        end
+      end
+
+      -- LSP 新附加时设置 K
       local group = vim.api.nvim_create_augroup("CommentTranslateK", { clear = true })
       vim.api.nvim_create_autocmd("LspAttach", {
         group = group,
@@ -386,6 +397,13 @@ return {
           })
         end,
       })
+
+      -- 插件加载时，为已打开的 LSP buffer 补设置 K
+      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        if vim.api.nvim_buf_is_loaded(bufnr) then
+          setup_k_for_buffer(bufnr)
+        end
+      end
     end,
   },
 }

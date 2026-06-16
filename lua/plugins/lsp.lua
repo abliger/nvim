@@ -83,7 +83,7 @@ return {
         map("gD", vim.lsp.buf.declaration, "跳转到声明")
         map("gr", vim.lsp.buf.references, "查找引用")
         map("gi", vim.lsp.buf.implementation, "跳转到实现")
-        map("K", vim.lsp.buf.hover, "悬停文档")
+        -- K 键由 comment-translate 插件统一处理（翻译注释 / 翻译 LSP hover）
         map("<C-k>", vim.lsp.buf.signature_help, "签名帮助")
         map("<leader>rn", vim.lsp.buf.rename, "重命名符号")
         map("<leader>ca", vim.lsp.buf.code_action, "代码操作")
