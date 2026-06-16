@@ -1,7 +1,103 @@
 -- ==========================================
 -- 注释/字符串翻译（中文）
--- 基于 noir4y/comment-translate.nvim
+-- 使用百度翻译 API（需设置 BAIDU_APPID / BAIDU_KEY）
+-- 注释识别基于 noir4y/comment-translate.nvim
 -- ==========================================
+
+local function urlencode(str)
+  return str:gsub("([^A-Za-z0-9_%-%.%~])", function(c)
+    return string.format("%%%02X", string.byte(c))
+  end)
+end
+
+-- 使用系统 md5 命令计算百度翻译签名（macOS 兼容）
+local function md5(str)
+  local output = vim.fn.system("md5 -s " .. vim.fn.shellescape(str))
+  return output:match("= (%x+)") or ""
+end
+
+local function baidu_translate(text, target_lang, callback)
+  local appid = vim.env.BAIDU_APPID
+  local key = vim.env.BAIDU_KEY
+
+  if not appid or appid == "" or not key or key == "" then
+    vim.notify(
+      "请设置环境变量 BAIDU_APPID 和 BAIDU_KEY 以使用百度翻译",
+      vim.log.levels.ERROR
+    )
+    callback(nil)
+    return
+  end
+
+  local salt = tostring(os.time()) .. tostring(math.random(1000, 9999))
+  local sign = md5(appid .. text .. salt .. key)
+
+  local to_lang = "zh"
+  if target_lang == "en" then
+    to_lang = "en"
+  end
+
+  local body = string.format(
+    "q=%s&from=auto&to=%s&appid=%s&salt=%s&sign=%s",
+    urlencode(text),
+    to_lang,
+    urlencode(appid),
+    salt,
+    sign
+  )
+
+  vim.system({
+    "curl",
+    "-sL",
+    "--max-time",
+    "10",
+    "-X",
+    "POST",
+    "https://fanyi-api.baidu.com/api/trans/vip/translate",
+    "-H",
+    "Content-Type: application/x-www-form-urlencoded",
+    "--data",
+    body,
+  }, { text = true }, function(obj)
+    vim.schedule(function()
+      if obj.code ~= 0 then
+        vim.notify("百度翻译请求失败: " .. (obj.stderr or ""), vim.log.levels.ERROR)
+        callback(nil)
+        return
+      end
+
+      local ok, json = pcall(vim.fn.json_decode, obj.stdout)
+      if not ok or not json then
+        vim.notify("百度翻译响应解析失败: " .. obj.stdout, vim.log.levels.ERROR)
+        callback(nil)
+        return
+      end
+
+      if json.error_code then
+        vim.notify(
+          string.format("百度翻译失败 [%s]: %s", json.error_code, json.error_msg or "未知错误"),
+          vim.log.levels.ERROR
+        )
+        callback(nil)
+        return
+      end
+
+      if not json.trans_result or #json.trans_result == 0 then
+        vim.notify("百度翻译返回空结果", vim.log.levels.ERROR)
+        callback(nil)
+        return
+      end
+
+      local parts = {}
+      for _, item in ipairs(json.trans_result) do
+        table.insert(parts, item.dst)
+      end
+      callback(table.concat(parts, "\n"))
+    end)
+  end)
+end
+
+local TARGET_LANGUAGE = "zh-CN"
 
 local function smart_hover()
   local bufnr = vim.api.nvim_get_current_buf()
@@ -11,32 +107,31 @@ local function smart_hover()
   if ok_parser then
     local text = parser.get_text_at_cursor(bufnr)
     if text and text ~= "" then
-      local ok_translate, translate = pcall(require, "comment-translate.translate")
       local ok_ui, hover_ui = pcall(require, "comment-translate.ui.hover")
-      local ok_config, ct_config = pcall(require, "comment-translate.config")
-
-      if ok_translate and ok_ui and ok_config then
-        translate.translate(text, ct_config.config.target_language, nil, function(result)
-          if not result or result == "" then
-            vim.notify("翻译失败，请检查网络连接", vim.log.levels.ERROR)
-            return
-          end
-
-          local lines = {
-            "# 原文",
-            "",
-            "```text",
-            text,
-            "```",
-            "",
-            "# 译文（" .. ct_config.config.target_language .. "）",
-            "",
-            result,
-          }
-          hover_ui.show(table.concat(lines, "\n"))
-        end)
+      if not ok_ui then
+        vim.notify("comment-translate.ui.hover 加载失败", vim.log.levels.ERROR)
         return
       end
+
+      baidu_translate(text, TARGET_LANGUAGE, function(result)
+        if not result or result == "" then
+          return
+        end
+
+        local lines = {
+          "# 原文",
+          "",
+          "```text",
+          text,
+          "```",
+          "",
+          "# 译文（" .. TARGET_LANGUAGE .. "）",
+          "",
+          result,
+        }
+        hover_ui.show(table.concat(lines, "\n"))
+      end)
+      return
     end
   end
 
@@ -58,15 +153,14 @@ return {
     event = { "BufReadPost", "BufNewFile" },
     config = function()
       require("comment-translate").setup({
-        -- 目标语言：简体中文
-        target_language = "zh-CN",
-        -- 使用 Google 翻译（无需 API key）
+        -- 这里的目标语言仅用于 comment-translate 内部默认值，实际使用 TARGET_LANGUAGE
+        target_language = TARGET_LANGUAGE,
+        -- 禁用默认 google 服务；我们使用自定义百度翻译 API
         translate_service = "google",
 
         hover = {
           enabled = true,
           delay = 500,
-          -- 关闭自动悬停；按 K 时手动触发
           auto = false,
         },
 
@@ -79,13 +173,11 @@ return {
           max_entries = 1000,
         },
 
-        -- 同时翻译注释和字符串
         targets = {
           comment = true,
           string = true,
         },
 
-        -- false 表示禁用默认快捷键；K 键在下面统一做智能判断
         keymaps = {
           hover = false,
           hover_manual = false,
