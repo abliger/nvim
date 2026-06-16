@@ -199,10 +199,108 @@ return {
           vim.notify("用法: :BaiduTranslateTest <要翻译的文本>", vim.log.levels.WARN)
           return
         end
-        baidu_translate(text, TARGET_LANGUAGE, function(result)
-          if result then
-            vim.notify("译文: " .. result, vim.log.levels.INFO)
-          end
+
+        local appid = vim.env.BAIDU_APPID or ""
+        local key = vim.env.BAIDU_KEY or ""
+
+        -- 在临时窗口中输出详细调试信息
+        local buf = vim.api.nvim_create_buf(false, true)
+        local lines = {
+          "# 百度翻译调试信息",
+          "",
+          "文本: " .. text,
+          "APPID 长度: " .. tostring(#appid) .. (appid == "" and " (未设置!)" or ""),
+          "KEY 长度: " .. tostring(#key) .. (key == "" and " (未设置!)" or ""),
+          "",
+        }
+
+        if appid == "" or key == "" then
+          vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.list_extend(lines, {
+            "错误: 请先在 shell 中 export BAIDU_APPID 和 BAIDU_KEY，",
+            "      然后完全退出并重新启动 Neovim。",
+          }))
+          vim.api.nvim_open_win(buf, true, {
+            relative = "editor",
+            width = 70,
+            height = 12,
+            col = math.floor((vim.o.columns - 70) / 2),
+            row = math.floor((vim.o.lines - 12) / 2),
+            style = "minimal",
+            border = "rounded",
+            title = " 百度翻译调试 ",
+            title_pos = "center",
+          })
+          return
+        end
+
+        local salt = tostring(os.time()) .. tostring(math.random(1000, 9999))
+        local sign_str = appid .. text .. salt .. key
+        local sign = md5(sign_str)
+        local body = string.format(
+          "q=%s&from=auto&to=zh&appid=%s&salt=%s&sign=%s",
+          urlencode(text),
+          urlencode(appid),
+          salt,
+          sign
+        )
+
+        vim.list_extend(lines, {
+          "签名字符串: " .. sign_str,
+          "计算签名: " .. sign,
+          "请求体: " .. body,
+          "",
+          "正在请求...",
+        })
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, lines)
+        vim.api.nvim_open_win(buf, true, {
+          relative = "editor",
+          width = 80,
+          height = 20,
+          col = math.floor((vim.o.columns - 80) / 2),
+          row = math.floor((vim.o.lines - 20) / 2),
+          style = "minimal",
+          border = "rounded",
+          title = " 百度翻译调试 ",
+          title_pos = "center",
+        })
+
+        vim.system({
+          "curl",
+          "-sL",
+          "--max-time",
+          "10",
+          "-X",
+          "POST",
+          "https://fanyi-api.baidu.com/api/trans/vip/translate",
+          "-H",
+          "Content-Type: application/x-www-form-urlencoded",
+          "--data",
+          body,
+        }, { text = true }, function(obj)
+          vim.schedule(function()
+            local result_lines = {
+              "",
+              "退出码: " .. tostring(obj.code),
+              "错误输出: " .. (obj.stderr or "(无)"),
+              "原始响应: " .. (obj.stdout or "(空)"),
+            }
+
+            local ok, json = pcall(vim.fn.json_decode, obj.stdout or "")
+            if ok and json then
+              table.insert(result_lines, "")
+              table.insert(result_lines, "解析结果:")
+              table.insert(result_lines, vim.inspect(json))
+              if json.trans_result and #json.trans_result > 0 then
+                table.insert(result_lines, "")
+                table.insert(result_lines, "译文:")
+                for _, item in ipairs(json.trans_result) do
+                  table.insert(result_lines, "  " .. (item.dst or ""))
+                end
+              end
+            end
+
+            vim.api.nvim_buf_set_lines(buf, -1, -1, false, result_lines)
+          end)
         end)
       end, { nargs = "*" })
 
