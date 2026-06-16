@@ -14,6 +14,7 @@ return {
           "stylua",
           "shfmt",
           "oxfmt",
+          "clang-format",
           -- Linter
           "oxlint",
         },
@@ -44,6 +45,9 @@ return {
           sh = { "shfmt" },
           -- Go
           go = { "gofumpt" },
+          -- C / C++
+          c = { "clang-format" },
+          cpp = { "clang-format" },
         },
         formatters = {
           gofumpt = {

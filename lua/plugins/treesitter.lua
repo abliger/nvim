@@ -4,6 +4,8 @@
 -- ==========================================
 
 local ensure_installed = {
+  "c",
+  "cpp",
   "java",
   "swift",
   "vue",

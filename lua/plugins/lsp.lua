@@ -44,6 +44,8 @@ return {
           "jsonls",
           -- Rust
           "rust_analyzer",
+          -- C / C++
+          "clangd",
           -- Go
           "gopls",
           -- 其他
@@ -413,6 +415,24 @@ return {
         },
       })
       vim.lsp.enable("rust_analyzer")
+
+      -- C / C++
+      vim.lsp.config("clangd", {
+        capabilities = capabilities,
+        on_attach = on_attach,
+        cmd = {
+          "clangd",
+          "--background-index",
+          "--clang-tidy",
+          "--header-insertion=iwyu",
+          "--completion-style=bundled",
+          "--pch-storage=memory",
+          "--cross-file-rename",
+        },
+        filetypes = { "c", "cpp", "objc", "objcpp" },
+        root_markers = { ".clangd", ".clang-tidy", ".clang-format", "compile_commands.json", ".git" },
+      })
+      vim.lsp.enable("clangd")
 
       -- Java (jdtls) 由 nvim-jdtls 插件处理，这里不配置
     end,
