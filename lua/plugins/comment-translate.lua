@@ -108,8 +108,8 @@ local function smart_hover()
   -- 1. 若光标位于注释或字符串上，则翻译并同时显示原文与译文
   local ok_parser, parser = pcall(require, "comment-translate.parser")
   if ok_parser then
-    local text = parser.get_text_at_cursor(bufnr)
-    if text and text ~= "" then
+    local text, node_type = parser.get_text_at_cursor(bufnr)
+    if text and text ~= "" and node_type and (node_type:find("comment") or node_type:find("string")) then
       local ok_ui, hover_ui = pcall(require, "comment-translate.ui.hover")
       if not ok_ui then
         vim.notify("comment-translate.ui.hover 加载失败", vim.log.levels.ERROR)
