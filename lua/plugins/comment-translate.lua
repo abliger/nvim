@@ -37,10 +37,10 @@ return {
           string = true,
         },
 
-        -- 默认快捷键留空，K 键在 LSP on_attach 中做智能判断
+        -- false 表示禁用默认快捷键；K 键在 LSP on_attach 中做智能判断
         keymaps = {
-          hover = "",
-          hover_manual = "",
+          hover = false,
+          hover_manual = false,
           replace = "<leader>tr",
           toggle = "<leader>tt",
         },
