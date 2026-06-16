@@ -144,10 +144,57 @@ local function smart_hover()
     vim.notify("comment-translate.parser 加载失败", vim.log.levels.ERROR)
   end
 
-  -- 2. 否则回退到 LSP hover（若当前 buffer 有 LSP 客户端）
+  -- 2. 否则获取 LSP hover 并翻译（保留原文对照）
   local has_lsp = #vim.lsp.get_clients({ bufnr = bufnr }) > 0
   if has_lsp then
-    vim.lsp.buf.hover()
+    local params = vim.lsp.util.make_position_params()
+    vim.lsp.buf_request_all(bufnr, "textDocument/hover", params, function(responses)
+      local contents = nil
+      for _, response in pairs(responses) do
+        if response.result and response.result.contents then
+          contents = response.result.contents
+          break
+        end
+      end
+
+      if not contents then
+        vim.notify("没有 LSP hover 信息", vim.log.levels.INFO)
+        return
+      end
+
+      local markdown_lines = vim.lsp.util.convert_input_to_markdown_lines(contents)
+      local original = table.concat(markdown_lines, "\n")
+      if original == "" then
+        vim.notify("LSP hover 内容为空", vim.log.levels.INFO)
+        return
+      end
+
+      local ok_ui, hover_ui = pcall(require, "comment-translate.ui.hover")
+      if not ok_ui then
+        vim.notify("comment-translate.ui.hover 加载失败", vim.log.levels.ERROR)
+        return
+      end
+
+      vim.notify("正在翻译 LSP hover...", vim.log.levels.INFO)
+      baidu_translate(original, TARGET_LANGUAGE, function(translated)
+        if not translated or translated == "" then
+          -- 翻译失败时回退显示原文
+          hover_ui.show(original)
+          return
+        end
+
+        local lines = {
+          "# 原文",
+          "",
+          original,
+          "",
+          "# 译文",
+          "",
+          translated,
+        }
+        hover_ui.show(table.concat(lines, "\n"))
+      end)
+    end)
     return
   end
 
