@@ -113,8 +113,10 @@ local function smart_hover()
         return
       end
 
+      vim.notify("正在翻译: " .. text:sub(1, 40) .. (#text > 40 and "..." or ""), vim.log.levels.INFO)
       baidu_translate(text, TARGET_LANGUAGE, function(result)
         if not result or result == "" then
+          vim.notify("翻译未返回结果，请检查 BAIDU_APPID / BAIDU_KEY", vim.log.levels.ERROR)
           return
         end
 
@@ -132,7 +134,11 @@ local function smart_hover()
         hover_ui.show(table.concat(lines, "\n"))
       end)
       return
+    else
+      vim.notify("光标未在注释或字符串上，回退到 LSP hover", vim.log.levels.INFO)
     end
+  else
+    vim.notify("comment-translate.parser 加载失败", vim.log.levels.ERROR)
   end
 
   -- 2. 否则回退到 LSP hover（若当前 buffer 有 LSP 客户端）
@@ -185,6 +191,20 @@ return {
           toggle = "<leader>tt",
         },
       })
+
+      -- 手动测试命令 :BaiduTranslateTest hello world
+      vim.api.nvim_create_user_command("BaiduTranslateTest", function(opts)
+        local text = opts.args
+        if text == "" then
+          vim.notify("用法: :BaiduTranslateTest <要翻译的文本>", vim.log.levels.WARN)
+          return
+        end
+        baidu_translate(text, TARGET_LANGUAGE, function(result)
+          if result then
+            vim.notify("译文: " .. result, vim.log.levels.INFO)
+          end
+        end)
+      end, { nargs = "*" })
 
       -- 全局 K 键：翻译注释/字符串 或 LSP hover
       vim.keymap.set("n", "K", smart_hover, { desc = "悬停文档 / 翻译注释" })
