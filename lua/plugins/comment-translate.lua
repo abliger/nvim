@@ -56,6 +56,8 @@ local function baidu_translate(text, target_lang, callback)
   vim.system({
     "curl",
     "-sL",
+    "--noproxy",
+    "*",
     "--max-time",
     "10",
     url,
@@ -271,6 +273,8 @@ return {
           "curl",
           "-v",
           "-sL",
+          "--noproxy",
+          "*",
           "--max-time",
           "10",
           test_url,
