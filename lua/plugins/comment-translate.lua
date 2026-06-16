@@ -269,6 +269,7 @@ return {
 
         vim.system({
           "curl",
+          "-v",
           "-sL",
           "--max-time",
           "10",
@@ -278,8 +279,10 @@ return {
             local result_lines = {
               "",
               "退出码: " .. tostring(obj.code),
-              "错误输出: " .. (obj.stderr or "(无)"),
-              "原始响应: " .. (obj.stdout or "(空)"),
+              "详细日志 (stderr):",
+              obj.stderr or "(无)",
+              "",
+              "原始响应 (stdout): " .. (obj.stdout or "(空)"),
             }
 
             local ok, json = pcall(vim.fn.json_decode, obj.stdout or "")
