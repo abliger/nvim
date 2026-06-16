@@ -16,13 +16,9 @@ end
 --   简化输出:  5d41402abc4b2a76b9719d911017c592
 local function md5(str)
   local output = vim.fn.system("md5 -s " .. vim.fn.shellescape(str))
-  -- 先尝试匹配 "= hash" 格式
-  local hash = output:match("= (%x+)")
-  if hash then
-    return hash
-  end
-  -- 否则匹配整行纯 32 位十六进制
-  hash = output:match("^(%x+)%s*$")
+  -- 去除所有空白后匹配 32 位十六进制
+  local clean = output:gsub("%s+", "")
+  local hash = clean:match("%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x")
   return hash or ""
 end
 
@@ -240,6 +236,7 @@ return {
 
         local salt = tostring(os.time()) .. tostring(math.random(1000, 9999))
         local sign_str = appid .. text .. salt .. key
+        local raw_md5 = vim.fn.system("md5 -s " .. vim.fn.shellescape(sign_str))
         local sign = md5(sign_str)
         local test_url = string.format(
           "https://fanyi-api.baidu.com/api/trans/vip/translate?q=%s&from=auto&to=zh&appid=%s&salt=%s&sign=%s",
@@ -251,6 +248,7 @@ return {
 
         vim.list_extend(lines, {
           "签名字符串: " .. sign_str,
+          "md5 原始输出: " .. raw_md5:gsub("\n", "\\n"),
           "计算签名: " .. sign,
           "请求 URL: " .. test_url,
           "",
