@@ -156,7 +156,7 @@ return {
   {
     "noir4y/comment-translate.nvim",
     dependencies = { "nvim-lua/plenary.nvim" },
-    event = { "BufReadPost", "BufNewFile" },
+    lazy = false,
     config = function()
       require("comment-translate").setup({
         -- 这里的目标语言仅用于 comment-translate 内部默认值，实际使用 TARGET_LANGUAGE
